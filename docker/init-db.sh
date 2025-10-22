@@ -40,7 +40,13 @@ psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoi
 
 # Create dummy records for understanding
 echo "Creating dummy records for understanding..."
-psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/10_dummy_records.sql"
+psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/01_dummy_users.sql"
+psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/02_dummy_brokers.sql"
+psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/03_dummy_securities.sql"
+psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/04_dummy_banks.sql"
+psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/05_dummy_assets.sql"
+psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/06_dummy_portfolio.sql"
+psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/07_dummy_transactions.sql"
 
 # Update portfolio summaries
 echo "Updating portfolio summaries..."

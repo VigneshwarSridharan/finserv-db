@@ -38,6 +38,10 @@ done
 echo "Creating additional sample data..."
 psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/09_additional_sample_data.sql"
 
+# Create dummy records for understanding
+echo "Creating dummy records for understanding..."
+psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/10_dummy_records.sql"
+
 # Update portfolio summaries
 echo "Updating portfolio summaries..."
 psql -h localhost -U portfolio_user -d portfolio_management -c "

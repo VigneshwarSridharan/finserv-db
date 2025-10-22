@@ -185,6 +185,16 @@ docker exec -i portfolio_db psql -U portfolio_user -d portfolio_management < exa
 psql -d portfolio_management -f examples/queries.sql
 ```
 
+### Understanding Database Structure
+
+```bash
+# Run understanding queries to explore database relationships
+docker exec -i portfolio_db psql -U portfolio_user -d portfolio_management < examples/understanding_queries.sql
+
+# Or with local PostgreSQL
+psql -d portfolio_management -f examples/understanding_queries.sql
+```
+
 ## 🛠️ Database Management
 
 ### Backup and Restore

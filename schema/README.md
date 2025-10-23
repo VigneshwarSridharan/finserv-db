@@ -64,6 +64,7 @@ The database is organized into 8 main schema files:
 - **v_asset_allocation**: Asset allocation analysis
 - **v_user_watchlist**: Watchlist with current prices
 - **v_recent_transactions**: Recent transaction history
+- **v_security_transactions**: Comprehensive security transaction view with P&L calculations
 
 ### 8. **Sample Data** (`08_sample_data.sql`)
 - Sample users, brokers, banks, and securities
@@ -225,6 +226,159 @@ SELECT * FROM v_user_assets WHERE user_id = 1;
 -- Get real estate assets
 SELECT * FROM v_user_assets 
 WHERE user_id = 1 AND category_name = 'Real Estate';
+```
+
+### Security Transactions
+```sql
+-- Get all transactions for a specific user
+SELECT * FROM v_security_transactions WHERE user_id = 1;
+
+-- Get only sell transactions with realized profits
+SELECT * FROM v_security_transactions 
+WHERE transaction_type = 'sell' AND realized_pnl > 0
+ORDER BY realized_pnl DESC;
+
+-- Get user transaction summary
+SELECT 
+    user_name,
+    COUNT(transaction_id) as total_transactions,
+    COUNT(CASE WHEN transaction_type = 'buy' THEN 1 END) as buy_count,
+    COUNT(CASE WHEN transaction_type = 'sell' THEN 1 END) as sell_count,
+    SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END) as total_invested,
+    SUM(CASE WHEN transaction_type = 'sell' THEN net_amount ELSE 0 END) as total_redeemed
+FROM v_security_transactions
+WHERE user_id = 1
+GROUP BY user_name;
+```
+
+## 📊 Security Transaction View (`v_security_transactions`)
+
+The `v_security_transactions` view provides comprehensive transaction analysis with:
+
+### Key Features
+- User and account information (username, broker, account details)
+- Security details (symbol, name, type, exchange, sector, industry, ISIN)
+- Transaction details (type, date, quantity, price, amounts)
+- Charge breakdown (brokerage, taxes, other charges)
+- Calculated metrics:
+  - **Effective price per unit** (including all charges)
+  - **Total charges** and charges percentage
+  - **Realized P&L** for sell transactions
+  - **Return percentage** for completed trades
+  - **Unrealized P&L contribution** for active holdings
+  - **Days held** for sell transactions
+  - **Cash flow impact** (positive for buy, negative for sell/dividend)
+- Transaction classification (Acquisition, Disposal, Income)
+
+### Common Analysis Queries
+
+#### Portfolio Performance Analysis
+```sql
+-- Calculate realized returns for all sold securities
+SELECT 
+    symbol,
+    security_name,
+    COUNT(*) as times_sold,
+    SUM(quantity) as total_quantity_sold,
+    AVG(return_percentage) as avg_return_pct,
+    SUM(realized_pnl) as total_realized_pnl,
+    AVG(days_held) as avg_holding_days
+FROM v_security_transactions
+WHERE transaction_type = 'sell'
+GROUP BY symbol, security_name
+ORDER BY total_realized_pnl DESC;
+```
+
+#### Trading Cost Analysis
+```sql
+-- Analyze trading costs by broker
+SELECT 
+    broker_name,
+    COUNT(*) as total_trades,
+    SUM(total_amount) as total_volume,
+    SUM(brokerage) as total_brokerage,
+    SUM(taxes) as total_taxes,
+    SUM(total_charges) as total_charges,
+    ROUND(AVG(charges_percentage), 2) as avg_charge_pct
+FROM v_security_transactions
+GROUP BY broker_name
+ORDER BY total_volume DESC;
+```
+
+#### Tax Planning - Short Term vs Long Term
+```sql
+-- Classify gains by holding period
+SELECT 
+    CASE 
+        WHEN days_held <= 365 THEN 'Short Term'
+        ELSE 'Long Term'
+    END as capital_gain_type,
+    COUNT(*) as transaction_count,
+    SUM(realized_pnl) as total_gain,
+    AVG(return_percentage) as avg_return_pct
+FROM v_security_transactions
+WHERE transaction_type = 'sell' AND days_held IS NOT NULL
+GROUP BY 
+    CASE 
+        WHEN days_held <= 365 THEN 'Short Term'
+        ELSE 'Long Term'
+    END;
+```
+
+#### Win/Loss Analysis
+```sql
+-- Calculate win rate and statistics
+WITH sell_stats AS (
+    SELECT 
+        COUNT(*) as total_sells,
+        COUNT(CASE WHEN realized_pnl > 0 THEN 1 END) as winning_trades,
+        COUNT(CASE WHEN realized_pnl < 0 THEN 1 END) as losing_trades,
+        AVG(CASE WHEN realized_pnl > 0 THEN realized_pnl END) as avg_win,
+        AVG(CASE WHEN realized_pnl < 0 THEN ABS(realized_pnl) END) as avg_loss,
+        SUM(realized_pnl) as total_pnl
+    FROM v_security_transactions
+    WHERE transaction_type = 'sell' AND realized_pnl IS NOT NULL
+)
+SELECT 
+    total_sells,
+    winning_trades,
+    losing_trades,
+    ROUND((winning_trades::NUMERIC / total_sells) * 100, 2) as win_rate_pct,
+    avg_win,
+    avg_loss,
+    ROUND(avg_win / NULLIF(avg_loss, 0), 2) as win_loss_ratio,
+    total_pnl
+FROM sell_stats;
+```
+
+#### Sector Performance Analysis
+```sql
+-- Analyze performance by sector
+SELECT 
+    sector,
+    COUNT(DISTINCT security_id) as securities_count,
+    COUNT(*) as total_sells,
+    AVG(return_percentage) as avg_return_pct,
+    SUM(realized_pnl) as total_realized_pnl,
+    AVG(days_held) as avg_holding_days
+FROM v_security_transactions
+WHERE transaction_type = 'sell' AND sector IS NOT NULL
+GROUP BY sector
+ORDER BY avg_return_pct DESC;
+```
+
+#### Monthly Transaction Analysis
+```sql
+-- Track monthly investment patterns
+SELECT 
+    DATE_TRUNC('month', transaction_date) as month,
+    COUNT(*) as transaction_count,
+    SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END) as total_invested,
+    SUM(CASE WHEN transaction_type = 'sell' THEN net_amount ELSE 0 END) as total_redeemed
+FROM v_security_transactions
+WHERE user_id = 1
+GROUP BY DATE_TRUNC('month', transaction_date)
+ORDER BY month DESC;
 ```
 
 ## 🔧 Maintenance & Updates

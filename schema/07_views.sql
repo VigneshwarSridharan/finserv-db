@@ -84,7 +84,7 @@ SELECT
         WHEN fd.maturity_date <= CURRENT_DATE + INTERVAL '30 days' THEN 'Maturity Soon'
         ELSE 'Active'
     END as status,
-    EXTRACT(DAYS FROM (fd.maturity_date - CURRENT_DATE)) as days_to_maturity
+    (fd.maturity_date - CURRENT_DATE) as days_to_maturity
 FROM fixed_deposits fd
 JOIN users u ON fd.user_id = u.user_id
 JOIN user_bank_accounts uba ON fd.account_id = uba.account_id
@@ -113,7 +113,7 @@ SELECT
         WHEN rd.maturity_date <= CURRENT_DATE + INTERVAL '30 days' THEN 'Maturity Soon'
         ELSE 'Active'
     END as status,
-    EXTRACT(DAYS FROM (rd.maturity_date - CURRENT_DATE)) as days_to_maturity,
+    (rd.maturity_date - CURRENT_DATE) as days_to_maturity,
     (SELECT COUNT(*) FROM rd_installments ri WHERE ri.rd_id = rd.rd_id AND ri.payment_status = 'paid') as paid_installments,
     (SELECT COUNT(*) FROM rd_installments ri WHERE ri.rd_id = rd.rd_id) as total_installments
 FROM recurring_deposits rd
@@ -263,3 +263,104 @@ JOIN users u ON at.user_id = u.user_id
 JOIN user_assets ua ON at.asset_id = ua.asset_id
 
 ORDER BY transaction_date DESC, transaction_id DESC;
+
+-- Security transactions detailed view
+CREATE VIEW v_security_transactions AS
+SELECT 
+    st.transaction_id,
+    st.user_id,
+    u.username,
+    u.first_name || ' ' || u.last_name as user_name,
+    u.email,
+    b.broker_name,
+    b.broker_code,
+    uba.account_number,
+    uba.account_type,
+    s.symbol,
+    s.name as security_name,
+    s.security_type,
+    s.exchange,
+    s.sector,
+    s.industry,
+    s.isin,
+    st.transaction_type,
+    st.transaction_date,
+    st.quantity,
+    st.price,
+    st.total_amount,
+    st.brokerage,
+    st.taxes,
+    st.other_charges,
+    st.net_amount,
+    -- Calculate effective price per unit (including all charges)
+    CASE 
+        WHEN st.quantity > 0 THEN 
+            ROUND(st.net_amount / st.quantity, 4)
+        ELSE 0 
+    END as effective_price_per_unit,
+    -- Calculate total charges
+    (st.brokerage + st.taxes + st.other_charges) as total_charges,
+    -- Calculate charges percentage
+    CASE 
+        WHEN st.total_amount > 0 THEN 
+            ROUND(((st.brokerage + st.taxes + st.other_charges) / st.total_amount) * 100, 2)
+        ELSE 0 
+    END as charges_percentage,
+    -- Get current holding information
+    ush.average_price as current_avg_price,
+    ush.quantity as current_holding_quantity,
+    ush.current_price,
+    -- Calculate unrealized P&L for current holdings
+    CASE 
+        WHEN st.transaction_type IN ('buy', 'bonus', 'split') THEN
+            CASE 
+                WHEN ush.current_price IS NOT NULL AND ush.average_price > 0 THEN
+                    ROUND((ush.current_price - ush.average_price) * st.quantity, 2)
+                ELSE NULL
+            END
+        ELSE NULL
+    END as unrealized_pnl_contribution,
+    -- Calculate realized P&L for sell transactions
+    CASE 
+        WHEN st.transaction_type = 'sell' AND ush.average_price IS NOT NULL THEN
+            ROUND((st.price - ush.average_price) * st.quantity - (st.brokerage + st.taxes + st.other_charges), 2)
+        ELSE NULL
+    END as realized_pnl,
+    -- Calculate return percentage for sell transactions
+    CASE 
+        WHEN st.transaction_type = 'sell' AND ush.average_price > 0 THEN
+            ROUND(((st.price - ush.average_price) / ush.average_price) * 100, 2)
+        ELSE NULL
+    END as return_percentage,
+    st.notes,
+    st.created_at,
+    -- Days held (for sell transactions)
+    CASE 
+        WHEN st.transaction_type = 'sell' AND ush.first_purchase_date IS NOT NULL THEN
+            st.transaction_date - ush.first_purchase_date
+        ELSE NULL
+    END as days_held,
+    -- Transaction classification
+    CASE 
+        WHEN st.transaction_type IN ('buy', 'bonus', 'split') THEN 'Acquisition'
+        WHEN st.transaction_type = 'sell' THEN 'Disposal'
+        WHEN st.transaction_type = 'dividend' THEN 'Income'
+        ELSE 'Other'
+    END as transaction_classification,
+    -- Calculate investment impact
+    CASE 
+        WHEN st.transaction_type = 'buy' THEN st.net_amount
+        WHEN st.transaction_type = 'sell' THEN -st.net_amount
+        WHEN st.transaction_type = 'dividend' THEN -st.net_amount
+        ELSE 0
+    END as cash_flow_impact
+FROM security_transactions st
+JOIN users u ON st.user_id = u.user_id
+JOIN user_broker_accounts uba ON st.account_id = uba.account_id
+JOIN brokers b ON uba.broker_id = b.broker_id
+JOIN securities s ON st.security_id = s.security_id
+LEFT JOIN user_security_holdings ush ON st.user_id = ush.user_id 
+    AND st.account_id = ush.account_id 
+    AND st.security_id = ush.security_id
+WHERE u.is_active = TRUE
+ORDER BY st.transaction_date DESC, st.transaction_id DESC;

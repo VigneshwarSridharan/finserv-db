@@ -63,16 +63,16 @@ INSERT INTO security_prices (security_id, price_date, open_price, high_price, lo
 -- Additional banks
 INSERT INTO banks (bank_name, bank_code, bank_type, website, contact_email, contact_phone, address, city, state) VALUES
 ('Kotak Mahindra Bank', 'KOTAK', 'private', 'https://kotak.com', 'support@kotak.com', '1800-419-6600', 'Kotak Mahindra Bank Tower, BKC', 'Mumbai', 'Maharashtra'),
-('Axis Bank', 'AXIS', 'private', 'https://axisbank.com', 'support@axisbank.com', '1800-419-5555', 'Axis Bank House, C-2, Wadia International Centre', 'Mumbai', 'Maharashtra'),
 ('Punjab National Bank', 'PNB', 'public', 'https://pnb.co.in', 'support@pnb.co.in', '1800-180-2222', '7, Bhikaji Cama Place', 'New Delhi', 'Delhi'),
 ('Canara Bank', 'CANARA', 'public', 'https://canarabank.com', 'support@canarabank.com', '1800-425-0018', '112, J C Road', 'Bangalore', 'Karnataka');
 
 -- Additional user bank accounts
+-- Bank IDs: 1=SBI, 2=HDFC, 3=ICICI, 4=Axis, 5=Kotak, 6=PNB, 7=Canara
 INSERT INTO user_bank_accounts (user_id, bank_id, account_number, account_type, account_name, ifsc_code, branch_name, opened_date) VALUES
 (4, 5, 'KOT7890123456', 'savings', 'Alice Johnson Kotak Account', 'KKBK0001234', 'Pune Main Branch', '2021-02-15'),
-(4, 6, 'AXIS8901234567', 'savings', 'Alice Johnson Axis Account', 'UTIB0001234', 'Pune Camp Branch', '2022-03-20'),
-(5, 7, 'PNB9012345678', 'savings', 'Bob Brown PNB Account', 'PUNB0001234', 'Chennai Central Branch', '2020-08-10'),
-(6, 8, 'CAN0123456789', 'savings', 'Sarah Davis Canara Account', 'CNRB0001234', 'Hyderabad Main Branch', '2021-11-25');
+(4, 4, 'AXIS8901234567', 'savings', 'Alice Johnson Axis Account', 'UTIB0001234', 'Pune Camp Branch', '2022-03-20'),
+(5, 6, 'PNB9012345678', 'savings', 'Bob Brown PNB Account', 'PUNB0001234', 'Chennai Central Branch', '2020-08-10'),
+(6, 7, 'CAN0123456789', 'savings', 'Sarah Davis Canara Account', 'CNRB0001234', 'Hyderabad Main Branch', '2021-11-25');
 
 -- Additional fixed deposits
 INSERT INTO fixed_deposits (user_id, account_id, fd_number, principal_amount, interest_rate, tenure_months, maturity_amount, start_date, maturity_date, interest_payout_frequency) VALUES
@@ -130,29 +130,30 @@ INSERT INTO user_watchlist (user_id, security_id, target_price, notes) VALUES
 (6, 16, 3500.00, 'Titan - Jewelry sector leader');
 
 -- Additional security holdings
+-- Broker account IDs: user 4 has accounts 6,7; user 5 has account 8; user 6 has account 9
 INSERT INTO user_security_holdings (user_id, account_id, security_id, quantity, average_price, current_price, first_purchase_date, last_purchase_date) VALUES
 (4, 7, 11, 200, 980.00, 1028.75, '2023-06-15', '2023-12-10'),
 (4, 7, 12, 50, 10500.00, 10925.50, '2023-07-20', '2023-11-25'),
-(4, 8, 13, 100, 3000.00, 3165.25, '2023-08-05', '2023-12-15'),
-(5, 9, 14, 25, 18000.00, 18575.00, '2023-05-10', '2023-10-20'),
-(5, 9, 15, 150, 8000.00, 8285.75, '2023-06-25', '2023-11-30'),
-(6, 10, 16, 100, 3100.00, 3265.50, '2023-07-15', '2023-12-05'),
-(6, 10, 17, 75, 6500.00, 6885.25, '2023-08-20', '2023-12-20'),
+(4, 6, 13, 100, 3000.00, 3165.25, '2023-08-05', '2023-12-15'),
+(5, 8, 14, 25, 18000.00, 18575.00, '2023-05-10', '2023-10-20'),
+(5, 8, 15, 150, 8000.00, 8285.75, '2023-06-25', '2023-11-30'),
+(6, 9, 16, 100, 3100.00, 3265.50, '2023-07-15', '2023-12-05'),
+(6, 9, 17, 75, 6500.00, 6885.25, '2023-08-20', '2023-12-20'),
 (4, 7, 19, 2000, 700.00, 722.25, '2023-09-01', '2023-12-18'),
-(5, 9, 20, 3000, 470.00, 487.85, '2023-10-10', '2023-12-12');
+(5, 8, 20, 3000, 470.00, 487.85, '2023-10-10', '2023-12-12');
 
 -- Additional security transactions
 INSERT INTO security_transactions (user_id, account_id, security_id, transaction_type, transaction_date, quantity, price, total_amount, brokerage, taxes, other_charges, net_amount) VALUES
 (4, 7, 11, 'buy', '2023-06-15', 100, 980.00, 98000.00, 98.00, 0.00, 0.00, 98098.00),
 (4, 7, 11, 'buy', '2023-12-10', 100, 1000.00, 100000.00, 100.00, 0.00, 0.00, 100100.00),
 (4, 7, 12, 'buy', '2023-07-20', 50, 10500.00, 525000.00, 525.00, 0.00, 0.00, 525525.00),
-(4, 8, 13, 'buy', '2023-08-05', 100, 3000.00, 300000.00, 300.00, 0.00, 0.00, 300300.00),
-(5, 9, 14, 'buy', '2023-05-10', 25, 18000.00, 450000.00, 450.00, 0.00, 0.00, 450450.00),
-(5, 9, 15, 'buy', '2023-06-25', 150, 8000.00, 1200000.00, 1200.00, 0.00, 0.00, 1201200.00),
-(6, 10, 16, 'buy', '2023-07-15', 100, 3100.00, 310000.00, 310.00, 0.00, 0.00, 310310.00),
-(6, 10, 17, 'buy', '2023-08-20', 75, 6500.00, 487500.00, 487.50, 0.00, 0.00, 487987.50),
+(4, 6, 13, 'buy', '2023-08-05', 100, 3000.00, 300000.00, 300.00, 0.00, 0.00, 300300.00),
+(5, 8, 14, 'buy', '2023-05-10', 25, 18000.00, 450000.00, 450.00, 0.00, 0.00, 450450.00),
+(5, 8, 15, 'buy', '2023-06-25', 150, 8000.00, 1200000.00, 1200.00, 0.00, 0.00, 1201200.00),
+(6, 9, 16, 'buy', '2023-07-15', 100, 3100.00, 310000.00, 310.00, 0.00, 0.00, 310310.00),
+(6, 9, 17, 'buy', '2023-08-20', 75, 6500.00, 487500.00, 487.50, 0.00, 0.00, 487987.50),
 (4, 7, 19, 'buy', '2023-09-01', 2000, 700.00, 1400000.00, 1400.00, 0.00, 0.00, 1401400.00),
-(5, 9, 20, 'buy', '2023-10-10', 3000, 470.00, 1410000.00, 1410.00, 0.00, 0.00, 1411410.00);
+(5, 8, 20, 'buy', '2023-10-10', 3000, 470.00, 1410000.00, 1410.00, 0.00, 0.00, 1411410.00);
 
 -- Additional asset transactions
 INSERT INTO asset_transactions (user_id, asset_id, transaction_type, transaction_date, quantity, price_per_unit, total_amount, transaction_fees, net_amount, counterparty, notes) VALUES

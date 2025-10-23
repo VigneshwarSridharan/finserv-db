@@ -1,19 +1,12 @@
 #!/bin/bash
 set -e
 
+echo "========================================="
 echo "Initializing Portfolio Management Database..."
+echo "========================================="
 
-# Wait for PostgreSQL to be ready
-until pg_isready -h localhost -p 5432 -U portfolio_user; do
-  echo "Waiting for PostgreSQL to be ready..."
-  sleep 2
-done
-
-# Create database if it doesn't exist
-psql -h localhost -U portfolio_user -d portfolio_management -c "SELECT 1" > /dev/null 2>&1 || {
-  echo "Creating database portfolio_management..."
-  createdb -h localhost -U portfolio_user portfolio_management
-}
+# Note: During docker-entrypoint-initdb.d execution, PostgreSQL is already running
+# and we're connected as the POSTGRES_USER to the POSTGRES_DB database
 
 # Execute schema files in order
 echo "Executing schema files..."
@@ -27,41 +20,59 @@ SCHEMA_FILES=(
   "06_constraints_triggers.sql"
   "07_views.sql"
   "08_sample_data.sql"
+  "09_additional_sample_data.sql"
 )
 
 for file in "${SCHEMA_FILES[@]}"; do
-  echo "Executing $file..."
-  psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/$file"
+  if [ -f "/docker-entrypoint-initdb.d/schema/$file" ]; then
+    echo "  ✓ Executing $file..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "/docker-entrypoint-initdb.d/schema/$file"
+  else
+    echo "  ✗ Warning: $file not found, skipping..."
+  fi
 done
 
-# Create additional sample data
-echo "Creating additional sample data..."
-psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/09_additional_sample_data.sql"
-
-# Create dummy records for understanding
-echo "Creating dummy records for understanding..."
-psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/01_dummy_users.sql"
-psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/02_dummy_brokers.sql"
-psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/03_dummy_securities.sql"
-psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/04_dummy_banks.sql"
-psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/05_dummy_assets.sql"
-psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/06_dummy_portfolio.sql"
-psql -h localhost -U portfolio_user -d portfolio_management -f "/docker-entrypoint-initdb.d/schema/dummy/07_dummy_transactions.sql"
+# Create dummy records for understanding (DISABLED - has conflicts with main sample data)
+# Uncomment below to load optional dummy data
+# echo "Creating dummy data..."
+#
+# DUMMY_FILES=(
+#   "01_dummy_users.sql"
+#   "02_dummy_brokers.sql"
+#   "03_dummy_securities.sql"
+#   "04_dummy_banks.sql"
+#   "05_dummy_assets.sql"
+#   "06_dummy_portfolio.sql"
+#   "07_dummy_transactions.sql"
+# )
+#
+# for file in "${DUMMY_FILES[@]}"; do
+#   if [ -f "/docker-entrypoint-initdb.d/schema/dummy/$file" ]; then
+#     echo "  ✓ Executing $file..."
+#     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "/docker-entrypoint-initdb.d/schema/dummy/$file"
+#   else
+#     echo "  ✗ Warning: $file not found, skipping..."
+#   fi
+# done
+echo "Skipping dummy data (disabled to avoid conflicts)"
 
 # Update portfolio summaries
 echo "Updating portfolio summaries..."
-psql -h localhost -U portfolio_user -d portfolio_management -c "
-SELECT calculate_portfolio_summary(user_id) FROM users;
-"
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+  SELECT calculate_portfolio_summary(user_id) FROM users;
+EOSQL
 
-echo "Database initialization completed successfully!"
-echo "You can now connect to the database using:"
-echo "  Host: localhost"
-echo "  Port: 5432"
-echo "  Database: portfolio_management"
-echo "  Username: portfolio_user"
-echo "  Password: portfolio_password"
+echo "========================================="
+echo "✓ Database initialization completed successfully!"
+echo "========================================="
 echo ""
-echo "PgAdmin is available at: http://localhost:8080"
+echo "Connection Details:"
+echo "  Host: localhost (or 'postgres' from other containers)"
+echo "  Port: 5432"
+echo "  Database: $POSTGRES_DB"
+echo "  Username: $POSTGRES_USER"
+echo ""
+echo "PgAdmin: http://localhost:8080"
 echo "  Email: admin@portfolio.com"
 echo "  Password: admin123"
+echo "========================================="

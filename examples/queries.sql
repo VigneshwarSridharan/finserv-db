@@ -656,3 +656,292 @@ SELECT
 FROM user_assets ua
 LEFT JOIN users u ON ua.user_id = u.user_id
 WHERE u.user_id IS NULL;
+
+-- =====================================================
+-- Security Transaction Views Queries
+-- =====================================================
+
+-- Query 1: View all security transactions for a specific user
+SELECT 
+    transaction_id,
+    transaction_date,
+    broker_name,
+    symbol,
+    security_name,
+    transaction_type,
+    quantity,
+    price,
+    total_amount,
+    brokerage,
+    taxes,
+    other_charges,
+    net_amount,
+    effective_price_per_unit,
+    realized_pnl,
+    return_percentage,
+    days_held
+FROM v_security_transactions
+WHERE user_id = 1
+ORDER BY transaction_date DESC;
+
+-- Query 2: Get user's transaction summary with all statistics
+SELECT 
+    user_name,
+    COUNT(transaction_id) as total_transactions,
+    COUNT(CASE WHEN transaction_type = 'buy' THEN 1 END) as buy_count,
+    COUNT(CASE WHEN transaction_type = 'sell' THEN 1 END) as sell_count,
+    COUNT(CASE WHEN transaction_type = 'dividend' THEN 1 END) as dividend_count,
+    SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END) as total_invested,
+    SUM(CASE WHEN transaction_type = 'sell' THEN net_amount ELSE 0 END) as total_redeemed,
+    SUM(CASE WHEN transaction_type = 'dividend' THEN net_amount ELSE 0 END) as total_dividend_received,
+    SUM(brokerage + taxes + other_charges) as total_charges_paid,
+    (SUM(CASE WHEN transaction_type = 'sell' THEN net_amount ELSE 0 END) + 
+     SUM(CASE WHEN transaction_type = 'dividend' THEN net_amount ELSE 0 END) - 
+     SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END)) as net_profit_loss,
+    COUNT(DISTINCT security_id) as unique_securities_traded,
+    COUNT(DISTINCT account_id) as accounts_used,
+    MIN(transaction_date) as first_transaction_date,
+    MAX(transaction_date) as last_transaction_date
+FROM v_security_transactions
+WHERE user_id = 1
+GROUP BY user_name;
+
+-- Query 3: View transactions for a specific security across all users
+SELECT 
+    user_name,
+    transaction_date,
+    broker_name,
+    transaction_type,
+    quantity,
+    price,
+    net_amount,
+    total_charges
+FROM v_security_transactions
+WHERE symbol = 'RELIANCE'
+ORDER BY transaction_date DESC;
+
+-- Query 4: Get security-wise transaction summary
+SELECT 
+    symbol,
+    security_name,
+    security_type,
+    sector,
+    COUNT(transaction_id) as total_transactions,
+    COUNT(DISTINCT user_id) as unique_investors,
+    SUM(CASE WHEN transaction_type = 'buy' THEN quantity ELSE 0 END) as total_bought_quantity,
+    SUM(CASE WHEN transaction_type = 'sell' THEN quantity ELSE 0 END) as total_sold_quantity,
+    (SUM(CASE WHEN transaction_type = 'buy' THEN quantity ELSE 0 END) - 
+     SUM(CASE WHEN transaction_type = 'sell' THEN quantity ELSE 0 END)) as net_quantity,
+    SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END) as total_buy_value,
+    SUM(CASE WHEN transaction_type = 'sell' THEN net_amount ELSE 0 END) as total_sell_value,
+    CASE 
+        WHEN SUM(CASE WHEN transaction_type = 'buy' THEN quantity ELSE 0 END) > 0 THEN
+            ROUND(SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END) / 
+                  SUM(CASE WHEN transaction_type = 'buy' THEN quantity ELSE 0 END), 2)
+        ELSE 0
+    END as avg_buy_price,
+    CASE 
+        WHEN SUM(CASE WHEN transaction_type = 'sell' THEN quantity ELSE 0 END) > 0 THEN
+            ROUND(SUM(CASE WHEN transaction_type = 'sell' THEN net_amount ELSE 0 END) / 
+                  SUM(CASE WHEN transaction_type = 'sell' THEN quantity ELSE 0 END), 2)
+        ELSE 0
+    END as avg_sell_price,
+    CASE 
+        WHEN SUM(CASE WHEN transaction_type = 'buy' THEN quantity ELSE 0 END) > 0 
+         AND SUM(CASE WHEN transaction_type = 'sell' THEN quantity ELSE 0 END) > 0 THEN
+            ROUND(((SUM(CASE WHEN transaction_type = 'sell' THEN net_amount ELSE 0 END) / 
+                    SUM(CASE WHEN transaction_type = 'sell' THEN quantity ELSE 0 END)) - 
+                   (SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END) / 
+                    SUM(CASE WHEN transaction_type = 'buy' THEN quantity ELSE 0 END))) / 
+                   (SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END) / 
+                    SUM(CASE WHEN transaction_type = 'buy' THEN quantity ELSE 0 END)) * 100, 2)
+        ELSE 0
+    END as avg_return_percentage
+FROM v_security_transactions
+GROUP BY symbol, security_name, security_type, sector
+ORDER BY total_transactions DESC
+LIMIT 20;
+
+-- Query 5: Monthly transaction analysis for a user
+SELECT 
+    DATE_TRUNC('month', transaction_date) as transaction_month,
+    COUNT(transaction_id) as transaction_count,
+    COUNT(CASE WHEN transaction_type = 'buy' THEN 1 END) as buy_count,
+    COUNT(CASE WHEN transaction_type = 'sell' THEN 1 END) as sell_count,
+    SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END) as total_invested,
+    SUM(CASE WHEN transaction_type = 'sell' THEN net_amount ELSE 0 END) as total_redeemed,
+    SUM(CASE WHEN transaction_type = 'dividend' THEN net_amount ELSE 0 END) as dividend_income,
+    SUM(brokerage + taxes + other_charges) as total_charges,
+    (SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END) - 
+     SUM(CASE WHEN transaction_type = 'sell' THEN net_amount ELSE 0 END)) as net_cash_flow,
+    COUNT(DISTINCT security_id) as securities_traded
+FROM v_security_transactions
+WHERE user_id = 1
+GROUP BY DATE_TRUNC('month', transaction_date)
+ORDER BY transaction_month DESC;
+
+-- Query 6: Find most profitable transactions (realized gains)
+SELECT 
+    transaction_date,
+    user_name,
+    symbol,
+    security_name,
+    quantity,
+    price as sell_price,
+    current_avg_price as buy_price,
+    realized_pnl,
+    return_percentage,
+    days_held,
+    CASE 
+        WHEN days_held <= 365 THEN 'Short Term'
+        ELSE 'Long Term'
+    END as holding_period
+FROM v_security_transactions
+WHERE transaction_type = 'sell' 
+  AND realized_pnl IS NOT NULL
+ORDER BY realized_pnl DESC
+LIMIT 20;
+
+-- Query 7: Find transactions with highest brokerage charges
+SELECT 
+    transaction_date,
+    user_name,
+    broker_name,
+    symbol,
+    security_name,
+    transaction_type,
+    total_amount,
+    brokerage,
+    taxes,
+    other_charges,
+    total_charges,
+    charges_percentage
+FROM v_security_transactions
+WHERE total_charges > 0
+ORDER BY total_charges DESC
+LIMIT 20;
+
+-- Query 8: Get year-to-date transaction summary by user
+SELECT 
+    user_name,
+    COUNT(*) as ytd_transactions,
+    SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END) as ytd_invested,
+    SUM(CASE WHEN transaction_type = 'sell' THEN net_amount ELSE 0 END) as ytd_redeemed,
+    SUM(CASE WHEN transaction_type = 'dividend' THEN net_amount ELSE 0 END) as ytd_dividends,
+    SUM(total_charges) as ytd_charges,
+    COUNT(DISTINCT security_id) as ytd_unique_securities
+FROM v_security_transactions
+WHERE EXTRACT(YEAR FROM transaction_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+GROUP BY user_id, user_name
+ORDER BY ytd_invested DESC;
+
+-- Query 9: Analyze buy vs sell activity by sector
+SELECT 
+    sector,
+    COUNT(CASE WHEN transaction_type = 'buy' THEN 1 END) as buy_transactions,
+    COUNT(CASE WHEN transaction_type = 'sell' THEN 1 END) as sell_transactions,
+    SUM(CASE WHEN transaction_type = 'buy' THEN quantity ELSE 0 END) as total_bought,
+    SUM(CASE WHEN transaction_type = 'sell' THEN quantity ELSE 0 END) as total_sold,
+    SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END) as buy_value,
+    SUM(CASE WHEN transaction_type = 'sell' THEN net_amount ELSE 0 END) as sell_value
+FROM v_security_transactions
+GROUP BY sector
+ORDER BY buy_value DESC;
+
+-- Query 10: Find securities with only buy transactions (never sold)
+SELECT 
+    symbol,
+    security_name,
+    security_type,
+    COUNT(*) as total_buys,
+    SUM(quantity) as total_quantity,
+    SUM(net_amount) as total_invested,
+    MIN(transaction_date) as first_purchase,
+    MAX(transaction_date) as last_purchase
+FROM v_security_transactions
+WHERE transaction_type = 'buy'
+  AND security_id NOT IN (
+      SELECT DISTINCT security_id 
+      FROM v_security_transactions 
+      WHERE transaction_type = 'sell'
+  )
+GROUP BY symbol, security_name, security_type
+ORDER BY total_invested DESC;
+
+-- Query 11: Calculate average holding period for sold securities
+SELECT 
+    symbol,
+    security_name,
+    COUNT(*) as sell_transactions,
+    AVG(days_held) as avg_days_held,
+    MIN(days_held) as min_days_held,
+    MAX(days_held) as max_days_held,
+    AVG(return_percentage) as avg_return_pct,
+    SUM(realized_pnl) as total_realized_pnl
+FROM v_security_transactions
+WHERE transaction_type = 'sell' 
+  AND days_held IS NOT NULL
+GROUP BY symbol, security_name
+HAVING COUNT(*) >= 2
+ORDER BY avg_return_pct DESC;
+
+-- Query 12: Find transactions with negative returns
+SELECT 
+    transaction_date,
+    user_name,
+    symbol,
+    security_name,
+    quantity,
+    price as sell_price,
+    current_avg_price as buy_price,
+    realized_pnl,
+    return_percentage,
+    days_held
+FROM v_security_transactions
+WHERE transaction_type = 'sell' 
+  AND realized_pnl < 0
+ORDER BY realized_pnl ASC;
+
+-- Query 13: Get broker-wise transaction statistics
+SELECT 
+    broker_name,
+    COUNT(*) as total_transactions,
+    COUNT(DISTINCT user_id) as unique_users,
+    SUM(CASE WHEN transaction_type = 'buy' THEN 1 ELSE 0 END) as buy_count,
+    SUM(CASE WHEN transaction_type = 'sell' THEN 1 ELSE 0 END) as sell_count,
+    SUM(total_amount) as total_volume,
+    SUM(brokerage) as total_brokerage_collected,
+    ROUND(AVG(charges_percentage), 2) as avg_charges_pct
+FROM v_security_transactions
+GROUP BY broker_name
+ORDER BY total_volume DESC;
+
+-- Query 14: Find highest value transactions
+SELECT 
+    transaction_date,
+    user_name,
+    broker_name,
+    symbol,
+    security_name,
+    transaction_type,
+    quantity,
+    price,
+    total_amount,
+    net_amount,
+    total_charges
+FROM v_security_transactions
+ORDER BY net_amount DESC
+LIMIT 20;
+
+-- Query 15: Calculate quarterly transaction trends
+SELECT 
+    DATE_TRUNC('quarter', transaction_date) as quarter,
+    COUNT(*) as transaction_count,
+    COUNT(DISTINCT user_id) as active_users,
+    SUM(CASE WHEN transaction_type = 'buy' THEN net_amount ELSE 0 END) as total_invested,
+    SUM(CASE WHEN transaction_type = 'sell' THEN net_amount ELSE 0 END) as total_redeemed,
+    SUM(CASE WHEN transaction_type = 'dividend' THEN net_amount ELSE 0 END) as total_dividends,
+    COUNT(DISTINCT security_id) as unique_securities
+FROM v_security_transactions
+GROUP BY DATE_TRUNC('quarter', transaction_date)
+ORDER BY quarter DESC;

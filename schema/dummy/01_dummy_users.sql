@@ -20,13 +20,13 @@ INSERT INTO users (username, email, password_hash, first_name, last_name, phone,
 -- 2. USER PROFILES
 -- =====================================================
 
--- User profiles for new users
+-- User profiles for new users (using unique PAN and Aadhar numbers)
 INSERT INTO user_profiles (user_id, address, city, state, country, postal_code, pan_number, aadhar_number, occupation, annual_income, risk_profile) VALUES
-(7, '456 Tech Park, Apartment 5B', 'Bangalore', 'Karnataka', 'India', '560001', 'ABCDE1234F', '789012345678', 'Software Engineer', 1200000.00, 'aggressive'),
-(8, '789 Startup Hub, Flat 12', 'Mumbai', 'Maharashtra', 'India', '400001', 'FGHIJ5678K', '890123456789', 'Product Manager', 1800000.00, 'aggressive'),
-(9, '321 Corporate Plaza, Office 8', 'Delhi', 'Delhi', 'India', '110001', 'KLMNO9012L', '901234567890', 'Business Analyst', 800000.00, 'moderate'),
-(10, '654 Financial District, Suite 15', 'Gurgaon', 'Haryana', 'India', '122001', 'PQRST3456M', '012345678901', 'Investment Advisor', 2000000.00, 'conservative'),
-(11, '987 Industrial Area, Unit 25', 'Ahmedabad', 'Gujarat', 'India', '380001', 'UVWXY7890N', '123456789012', 'Manufacturing Manager', 1500000.00, 'moderate');
+(7, '456 Tech Park, Apartment 5B', 'Bangalore', 'Karnataka', 'India', '560001', 'DUMMY1234G', '789012345670', 'Software Engineer', 1200000.00, 'aggressive'),
+(8, '789 Startup Hub, Flat 12', 'Mumbai', 'Maharashtra', 'India', '400001', 'DUMMY5678H', '890123456781', 'Product Manager', 1800000.00, 'aggressive'),
+(9, '321 Corporate Plaza, Office 8', 'Delhi', 'Delhi', 'India', '110001', 'DUMMY9012I', '901234567892', 'Business Analyst', 800000.00, 'moderate'),
+(10, '654 Financial District, Suite 15', 'Gurgaon', 'Haryana', 'India', '122001', 'DUMMY3456J', '012345678903', 'Investment Advisor', 2000000.00, 'conservative'),
+(11, '987 Industrial Area, Unit 25', 'Ahmedabad', 'Gujarat', 'India', '380001', 'DUMMY7890K', '123456789014', 'Manufacturing Manager', 1500000.00, 'moderate');
 
 -- =====================================================
 -- 3. USER PREFERENCES

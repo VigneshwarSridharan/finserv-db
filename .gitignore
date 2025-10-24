@@ -1,0 +1,94 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+*.env
+
+# Database Files
+*.sql.gz
+*.dump
+*.backup
+*.bak
+pgdata/
+postgres-data/
+db-data/
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Backup Files
+backup/
+backups/
+*.backup
+*~
+
+# Node modules (if using any JS tools)
+node_modules/
+npm-debug.log
+package-lock.json
+yarn.lock
+
+# Python (if using any Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Database dumps and exports
+exports/
+dumps/
+*.csv
+*.xlsx
+*.xls
+
+# Test output
+test-results/
+coverage/
+
+# Build artifacts
+dist/
+build/
+

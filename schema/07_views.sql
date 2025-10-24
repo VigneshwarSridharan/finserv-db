@@ -129,7 +129,7 @@ SELECT
     ua.user_id,
     u.first_name || ' ' || u.last_name as user_name,
     ac.category_name,
-    asc.subcategory_name,
+    asub.subcategory_name,
     ua.asset_name,
     ua.description,
     ua.purchase_date,
@@ -151,7 +151,7 @@ SELECT
 FROM user_assets ua
 JOIN users u ON ua.user_id = u.user_id
 JOIN asset_categories ac ON ua.category_id = ac.category_id
-LEFT JOIN asset_subcategories asc ON ua.subcategory_id = asc.subcategory_id
+LEFT JOIN asset_subcategories asub ON ua.subcategory_id = asub.subcategory_id
 WHERE ua.is_active = TRUE AND u.is_active = TRUE;
 
 -- Portfolio performance view

@@ -5,7 +5,7 @@ import {
   portfolioPerformance, 
   portfolioGoals,
   userAssets,
-  securityHoldings,
+  userSecurityHoldings,
   fixedDeposits,
   recurringDeposits
 } from '../db/schema';
@@ -48,8 +48,8 @@ export async function getPortfolioOverview(req: AuthRequest, res: Response) {
   // Get asset counts by category
   const assetCounts = {
     securities: await db.select({ count: sql<number>`count(*)::int` })
-      .from(securityHoldings)
-      .where(eq(securityHoldings.user_id, userId)),
+      .from(userSecurityHoldings)
+      .where(eq(userSecurityHoldings.user_id, userId)),
     fixed_deposits: await db.select({ count: sql<number>`count(*)::int` })
       .from(fixedDeposits)
       .where(eq(fixedDeposits.user_id, userId)),

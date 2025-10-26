@@ -1,37 +1,23 @@
 import { Box, Stack, Text, Button } from '@chakra-ui/react';
 import type { ReactNode } from 'react';
-import { FiInbox } from 'react-icons/fi';
 
 interface EmptyStateProps {
+  icon?: ReactNode;
   title: string;
   description?: string;
-  icon?: ReactNode;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
-const EmptyState = ({ title, description, icon, action }: EmptyStateProps) => {
+const EmptyState = ({ icon, title, description, actionLabel, onAction }: EmptyStateProps) => {
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      py={12}
-      px={4}
-    >
-      <Stack gap={4} textAlign="center" maxW="md">
-        <Box
-          display="flex"
-          justifyContent="center"
-          fontSize="4xl"
-          color="text.secondary"
-          opacity={0.5}
-        >
-          {icon || <FiInbox />}
-        </Box>
+    <Box textAlign="center" py={12}>
+      <Stack gap={4} alignItems="center" maxW="md" mx="auto">
+        {icon && (
+          <Box color="text.secondary" opacity={0.3} fontSize="5xl">
+            {icon}
+          </Box>
+        )}
         
         <Stack gap={2}>
           <Text fontSize="lg" fontWeight="semibold" color="text.primary">
@@ -45,14 +31,9 @@ const EmptyState = ({ title, description, icon, action }: EmptyStateProps) => {
           )}
         </Stack>
         
-        {action && (
-          <Button
-            onClick={action.onClick}
-            colorScheme="brand"
-            size="md"
-            mt={2}
-          >
-            {action.label}
+        {actionLabel && onAction && (
+          <Button onClick={onAction} colorPalette="brand" size="md" mt={2}>
+            {actionLabel}
           </Button>
         )}
       </Stack>
@@ -61,4 +42,3 @@ const EmptyState = ({ title, description, icon, action }: EmptyStateProps) => {
 };
 
 export default EmptyState;
-

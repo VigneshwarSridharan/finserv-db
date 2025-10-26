@@ -36,6 +36,24 @@ const config = defineConfig({
             _dark: "{colors.gray.800}",
           },
         },
+        "bg.muted": {
+          value: {
+            base: "{colors.gray.100}",
+            _dark: "{colors.gray.700}",
+          },
+        },
+        "bg.active": {
+          value: {
+            base: "{colors.brand.50}",
+            _dark: "{colors.brand.900}",
+          },
+        },
+        "bg.hover": {
+          value: {
+            base: "{colors.gray.100}",
+            _dark: "{colors.gray.700}",
+          },
+        },
         "text.primary": {
           value: {
             base: "{colors.gray.900}",
@@ -46,6 +64,12 @@ const config = defineConfig({
           value: {
             base: "{colors.gray.600}",
             _dark: "{colors.gray.400}",
+          },
+        },
+        "text.active": {
+          value: {
+            base: "{colors.brand.600}",
+            _dark: "{colors.brand.300}",
           },
         },
         "border.default": {

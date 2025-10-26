@@ -26,7 +26,7 @@ const MobileNav = () => {
       borderTop="1px"
       borderColor="border.default"
       bg="bg.surface"
-      zIndex="sticky"
+      zIndex={99}
       pb="env(safe-area-inset-bottom)"
     >
       <Flex justifyContent="space-around" px={2} py={2}>
@@ -45,7 +45,7 @@ const MobileNav = () => {
                 px={3}
                 py={1}
                 minW="60px"
-                color={isActive ? 'brand.600' : 'text.secondary'}
+                color={isActive ? 'text.active' : 'text.secondary'}
                 transition="color 0.2s"
               >
                 <Box as={item.icon} fontSize="22px" />

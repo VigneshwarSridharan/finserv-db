@@ -6,7 +6,6 @@ import { queryClient } from './api/queryClient';
 import { system } from './theme';
 import { Toaster } from './components/ui/toaster';
 import App from './App';
-import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -147,15 +147,15 @@ const DashboardPage = () => {
                   <Stack gap={2}>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Text fontSize="sm">Total Goals</Text>
-                      <Badge colorScheme="blue">{goals.total_goals}</Badge>
+                      <Badge colorPalette="blue">{goals.total_goals}</Badge>
                     </Box>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Text fontSize="sm">Achieved</Text>
-                      <Badge colorScheme="green">{goals.achieved_goals}</Badge>
+                      <Badge colorPalette="green">{goals.achieved_goals}</Badge>
                     </Box>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Text fontSize="sm">Pending</Text>
-                      <Badge colorScheme="orange">{goals.pending_goals}</Badge>
+                      <Badge colorPalette="orange">{goals.pending_goals}</Badge>
                     </Box>
                   </Stack>
                 </Box>
@@ -168,19 +168,19 @@ const DashboardPage = () => {
                   <Stack gap={2}>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Text fontSize="sm">Securities</Text>
-                      <Badge>{asset_counts.securities}</Badge>
+                      <Badge colorPalette="gray">{asset_counts.securities}</Badge>
                     </Box>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Text fontSize="sm">Fixed Deposits</Text>
-                      <Badge>{asset_counts.fixed_deposits}</Badge>
+                      <Badge colorPalette="gray">{asset_counts.fixed_deposits}</Badge>
                     </Box>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Text fontSize="sm">Recurring Deposits</Text>
-                      <Badge>{asset_counts.recurring_deposits}</Badge>
+                      <Badge colorPalette="gray">{asset_counts.recurring_deposits}</Badge>
                     </Box>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Text fontSize="sm">Other Assets</Text>
-                      <Badge>{asset_counts.other_assets}</Badge>
+                      <Badge colorPalette="gray">{asset_counts.other_assets}</Badge>
                     </Box>
                   </Stack>
                 </Box>
@@ -204,33 +204,40 @@ const DashboardPage = () => {
                     borderRadius="md"
                     border="1px"
                     borderColor="border.default"
-                    _hover={{ bg: 'bg.canvas' }}
+                    _hover={{ bg: 'bg.hover' }}
                     transition="background 0.2s"
                   >
-                    <Grid templateColumns={{ base: '1fr', md: 'repeat(5, 1fr)' }} gap={4}>
+                    <Grid 
+                      templateColumns={{ 
+                        base: 'repeat(2, 1fr)', 
+                        sm: 'repeat(3, 1fr)', 
+                        md: 'repeat(5, 1fr)' 
+                      }} 
+                      gap={4}
+                    >
                       <Box>
                         <Text fontSize="xs" color="text.secondary" mb={1}>Asset Type</Text>
-                        <Text fontWeight="semibold">
+                        <Text fontWeight="semibold" fontSize="sm" lineClamp={1}>
                           {asset.asset_type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                         </Text>
                       </Box>
                       <Box>
                         <Text fontSize="xs" color="text.secondary" mb={1}>Investment</Text>
-                        <Text fontWeight="medium">{formatCurrency(asset.investment)}</Text>
+                        <Text fontWeight="medium" fontSize="sm">{formatCurrency(asset.investment)}</Text>
                       </Box>
                       <Box>
                         <Text fontSize="xs" color="text.secondary" mb={1}>Current Value</Text>
-                        <Text fontWeight="medium">{formatCurrency(asset.current_value)}</Text>
+                        <Text fontWeight="medium" fontSize="sm">{formatCurrency(asset.current_value)}</Text>
                       </Box>
                       <Box>
                         <Text fontSize="xs" color="text.secondary" mb={1}>P&L</Text>
-                        <Text fontWeight="medium" color={getPnLColor(asset.pnl)}>
+                        <Text fontWeight="medium" fontSize="sm" color={getPnLColor(asset.pnl)}>
                           {formatCurrency(asset.pnl)}
                         </Text>
                       </Box>
                       <Box>
                         <Text fontSize="xs" color="text.secondary" mb={1}>Portfolio %</Text>
-                        <Text fontWeight="medium">{formatPercentage(asset.percentage)}</Text>
+                        <Text fontWeight="medium" fontSize="sm">{formatPercentage(asset.percentage)}</Text>
                       </Box>
                     </Grid>
                   </Box>

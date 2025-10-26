@@ -1,13 +1,11 @@
 import {
   Box,
+  Button,
   Flex,
   Heading,
   IconButton,
   Menu,
-  MenuTrigger,
-  MenuContent,
-  MenuItem,
-  MenuSeparator,
+  Portal,
   Text,
 } from '@chakra-ui/react';
 import { FiMenu, FiUser, FiSettings, FiLogOut } from 'react-icons/fi';
@@ -34,7 +32,7 @@ const Header = () => {
       bg="bg.surface"
       position="sticky"
       top="0"
-      zIndex="sticky"
+      zIndex={100}
     >
       <Flex
         h="16"
@@ -53,7 +51,7 @@ const Header = () => {
           >
             <FiMenu />
           </IconButton>
-          
+
           <Heading size="md" color="text.primary">
             Portfolio Manager
           </Heading>
@@ -62,40 +60,44 @@ const Header = () => {
         {/* Right Section */}
         <Flex alignItems="center" gap={2}>
           <ColorModeButton />
-          
+
           <Menu.Root>
-            <MenuTrigger asChild>
+            <Menu.Trigger asChild>
               <IconButton
                 aria-label="User menu"
                 variant="ghost"
               >
                 <FiUser />
               </IconButton>
-            </MenuTrigger>
-            <MenuContent>
-              <Box px={3} py={2}>
-                <Text fontWeight="semibold" fontSize="sm">
-                  {user?.first_name} {user?.last_name}
-                </Text>
-                <Text fontSize="xs" color="text.secondary">
-                  {user?.email}
-                </Text>
-              </Box>
-              <MenuSeparator />
-              <MenuItem value="profile" onClick={() => navigate('/profile')}>
-                <FiUser />
-                Profile
-              </MenuItem>
-              <MenuItem value="settings" onClick={() => navigate('/settings')}>
-                <FiSettings />
-                Settings
-              </MenuItem>
-              <MenuSeparator />
-              <MenuItem value="logout" onClick={handleLogout} color="red.500">
-                <FiLogOut />
-                Logout
-              </MenuItem>
-            </MenuContent>
+            </Menu.Trigger>
+            <Portal>
+              <Menu.Positioner>
+                <Menu.Content>
+                  <Box px={3} py={2}>
+                    <Text fontWeight="semibold" fontSize="sm" color="text.primary">
+                      {user?.first_name} {user?.last_name}
+                    </Text>
+                    <Text fontSize="xs" color="text.secondary">
+                      {user?.email}
+                    </Text>
+                  </Box>
+                  <Menu.Separator />
+                  <Menu.Item value="profile" onClick={() => navigate('/profile')}>
+                    <FiUser style={{ marginRight: '8px' }} />
+                    Profile
+                  </Menu.Item>
+                  <Menu.Item value="settings" onClick={() => navigate('/settings')}>
+                    <FiSettings style={{ marginRight: '8px' }} />
+                    Settings
+                  </Menu.Item>
+                  <Menu.Separator />
+                  <Menu.Item value="logout" onClick={handleLogout} color="red.500">
+                    <FiLogOut style={{ marginRight: '8px' }} />
+                    Logout
+                  </Menu.Item>
+                </Menu.Content>
+              </Menu.Positioner>
+            </Portal>
           </Menu.Root>
         </Flex>
       </Flex>

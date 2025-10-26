@@ -38,10 +38,10 @@ const Sidebar = () => {
                 py={3}
                 borderRadius="md"
                 cursor="pointer"
-                bg={isActive ? 'brand.50' : 'transparent'}
-                color={isActive ? 'brand.600' : 'text.secondary'}
+                bg={isActive ? 'bg.active' : 'transparent'}
+                color={isActive ? 'text.active' : 'text.secondary'}
                 _hover={{
-                  bg: isActive ? 'brand.100' : 'bg.canvas',
+                  bg: isActive ? 'bg.active' : 'bg.hover',
                 }}
                 transition="all 0.2s"
               >

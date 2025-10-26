@@ -28,7 +28,12 @@ const AppLayout = () => {
         </Box>
 
         {/* Main Content */}
-        <Box flex="1" overflow="auto" bg="bg.canvas">
+        <Box 
+          flex="1" 
+          overflow="auto" 
+          bg="bg.canvas"
+          pb={{ base: '80px', lg: '0' }}
+        >
           <Outlet />
         </Box>
       </Flex>

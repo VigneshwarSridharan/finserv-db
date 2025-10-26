@@ -8,9 +8,20 @@ const LoginPage = lazy(() => import('../features/auth/LoginPage'));
 const RegisterPage = lazy(() => import('../features/auth/RegisterPage'));
 const DashboardPage = lazy(() => import('../features/dashboard/DashboardPage'));
 const SecuritiesPage = lazy(() => import('../features/securities/SecuritiesPage'));
+const BrokersPage = lazy(() => import('../features/securities/BrokersPage'));
+const HoldingsPage = lazy(() => import('../features/securities/HoldingsPage'));
+const TransactionsPage = lazy(() => import('../features/securities/TransactionsPage'));
 const BankingPage = lazy(() => import('../features/banking/BankingPage'));
+const BankAccountsPage = lazy(() => import('../features/banking/BankAccountsPage'));
+const FixedDepositsPage = lazy(() => import('../features/banking/FixedDepositsPage'));
+const RecurringDepositsPage = lazy(() => import('../features/banking/RecurringDepositsPage'));
 const AssetsPage = lazy(() => import('../features/assets/AssetsPage'));
+const AssetsListPage = lazy(() => import('../features/assets/AssetsListPage'));
+const CategoriesPage = lazy(() => import('../features/assets/CategoriesPage'));
 const PortfolioPage = lazy(() => import('../features/portfolio/PortfolioPage'));
+const GoalsPage = lazy(() => import('../features/portfolio/GoalsPage'));
+const AlertsPage = lazy(() => import('../features/portfolio/AlertsPage'));
+const WatchlistPage = lazy(() => import('../features/portfolio/WatchlistPage'));
 const ProfilePage = lazy(() => import('../features/profile/ProfilePage'));
 const AppLayout = lazy(() => import('../components/layout/AppLayout'));
 
@@ -72,9 +83,20 @@ const AppRoutes = () => {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="securities" element={<SecuritiesPage />} />
+          <Route path="securities/brokers" element={<BrokersPage />} />
+          <Route path="securities/holdings" element={<HoldingsPage />} />
+          <Route path="securities/transactions" element={<TransactionsPage />} />
           <Route path="banking" element={<BankingPage />} />
+          <Route path="banking/accounts" element={<BankAccountsPage />} />
+          <Route path="banking/fixed-deposits" element={<FixedDepositsPage />} />
+          <Route path="banking/recurring-deposits" element={<RecurringDepositsPage />} />
           <Route path="assets" element={<AssetsPage />} />
+          <Route path="assets/list" element={<AssetsListPage />} />
+          <Route path="assets/categories" element={<CategoriesPage />} />
           <Route path="portfolio" element={<PortfolioPage />} />
+          <Route path="portfolio/goals" element={<GoalsPage />} />
+          <Route path="portfolio/alerts" element={<AlertsPage />} />
+          <Route path="portfolio/watchlist" element={<WatchlistPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<ProfilePage />} />
         </Route>

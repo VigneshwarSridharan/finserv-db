@@ -22,13 +22,18 @@ const StatCard = ({ label, value, icon, trend, color }: StatCardProps) => {
               {label}
             </Text>
             {icon && (
-              <Box color={color || 'brand.500'} fontSize="xl">
+              <Box color={color || 'brand.500'} fontSize={{ base: 'lg', md: 'xl' }}>
                 {icon}
               </Box>
             )}
           </Box>
           
-          <Text fontSize="2xl" fontWeight="bold" color={color || 'text.primary'}>
+          <Text 
+            fontSize={{ base: 'xl', md: '2xl' }} 
+            fontWeight="bold" 
+            color={color || 'text.primary'}
+            lineClamp={1}
+          >
             {value}
           </Text>
           

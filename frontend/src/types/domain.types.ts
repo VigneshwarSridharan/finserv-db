@@ -35,20 +35,31 @@ export interface UpdatePortfolioRequest {
 export interface Broker {
   broker_id: number;
   broker_name: string;
-  broker_code?: string;
+  broker_code: string;
+  broker_type: 'full_service' | 'discount' | 'online' | 'bank';
   website?: string;
   contact_email?: string;
   contact_phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
   is_active: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 export interface CreateBrokerRequest {
   broker_name: string;
-  broker_code?: string;
+  broker_code: string;
+  broker_type: 'full_service' | 'discount' | 'online' | 'bank';
   website?: string;
   contact_email?: string;
   contact_phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
 }
 
 // Security Types

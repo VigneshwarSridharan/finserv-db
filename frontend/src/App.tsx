@@ -3,6 +3,7 @@ import { Box } from '@chakra-ui/react';
 import { useThemeStore } from './store/themeStore';
 import { useEffect } from 'react';
 import AppRoutes from './routes';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 function App() {
   const { colorMode } = useThemeStore();
@@ -18,11 +19,13 @@ function App() {
   }, [colorMode]);
 
   return (
-    <Router>
-      <Box minH="100vh" bg="bg.canvas">
-        <AppRoutes />
-      </Box>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <Box minH="100vh" bg="bg.canvas">
+          <AppRoutes />
+        </Box>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

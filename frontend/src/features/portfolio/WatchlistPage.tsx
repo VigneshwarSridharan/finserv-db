@@ -14,17 +14,7 @@ import { LuPlus, LuTrash2, LuTrendingUp, LuTrendingDown } from 'react-icons/lu';
 import { watchlistService } from '../../api/services/portfolio-features.service';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-
-interface WatchlistItem {
-  id: number;
-  security_name: string;
-  security_symbol: string;
-  current_price: number;
-  added_price: number;
-  price_change: number;
-  price_change_percentage: number;
-  notes?: string;
-}
+import type { WatchlistItem } from '../../types/domain.types';
 
 const WatchlistPage = () => {
   const { data: response, isLoading } = useQuery({
@@ -34,15 +24,17 @@ const WatchlistPage = () => {
 
   const watchlist: WatchlistItem[] = response?.data || [];
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: string | number) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-    }).format(value);
+    }).format(numValue);
   };
 
-  const formatPercentage = (value: number) => {
-    return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+  const formatPercentage = (value: string | number) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return `${numValue >= 0 ? '+' : ''}${numValue.toFixed(2)}%`;
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -61,11 +53,8 @@ const WatchlistPage = () => {
           <EmptyState
             title="Your watchlist is empty"
             description="Add securities to your watchlist to track their prices"
-            action={
-              <Button colorScheme="blue">
-                <LuPlus /> Add to Watchlist
-              </Button>
-            }
+            actionLabel="Add to Watchlist"
+            onAction={() => {}}
           />
         ) : (
           <Table.Root variant="outline">
@@ -81,14 +70,15 @@ const WatchlistPage = () => {
             </Table.Header>
             <Table.Body>
               {watchlist.map((item) => {
-                const isPositive = item.price_change >= 0;
+                const priceChange = typeof item.price_change === 'string' ? parseFloat(item.price_change) : item.price_change;
+                const isPositive = priceChange >= 0;
                 return (
-                  <Table.Row key={item.id}>
+                  <Table.Row key={item.watchlist_id}>
                     <Table.Cell>
                       <Stack gap={0}>
                         <Text fontWeight="medium">{item.security_name}</Text>
                         <Text fontSize="sm" color="text.secondary">
-                          {item.security_symbol}
+                          {item.symbol}
                         </Text>
                       </Stack>
                     </Table.Cell>
@@ -110,7 +100,7 @@ const WatchlistPage = () => {
                             fontWeight="medium"
                             color={isPositive ? 'green.600' : 'red.600'}
                           >
-                            {formatCurrency(Math.abs(item.price_change))}
+                            {formatCurrency(Math.abs(priceChange))}
                           </Text>
                         </HStack>
                         <Badge colorScheme={isPositive ? 'green' : 'red'}>

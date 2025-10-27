@@ -13,10 +13,12 @@ import {
   DialogTitle,
   DialogCloseTrigger,
   DialogActionTrigger,
+  DialogBackdrop,
+  DialogPositioner,
+  Portal,
   HStack,
   Badge,
   Text,
-  Select,
   VStack,
   Flex,
 } from '@chakra-ui/react';
@@ -36,35 +38,24 @@ import EmptyState from '../../components/common/EmptyState';
 import { InputField, SelectField } from '../../components/common/FormField';
 import DateRangePicker from '../../components/common/DateRangePicker';
 import ResponsiveTable from '../../components/common/ResponsiveTable';
+import type { SecurityTransaction } from '../../types/domain.types';
 
 const transactionSchema = z.object({
-  broker_account_id: z.number({ required_error: 'Broker account is required' }),
-  security_id: z.number({ required_error: 'Security is required' }),
-  transaction_type: z.enum(['BUY', 'SELL', 'DIVIDEND', 'BONUS', 'SPLIT']),
+  account_id: z.number({ message: 'Broker account is required' }),
+  security_id: z.number({ message: 'Security is required' }),
+  transaction_type: z.enum(['buy', 'sell', 'dividend', 'bonus', 'split']),
   quantity: z.number().min(0.01, 'Quantity must be greater than 0'),
   price: z.number().min(0, 'Price must be 0 or greater'),
   transaction_date: z.string().min(1, 'Transaction date is required'),
-  fees: z.number().min(0).optional(),
-  tax: z.number().min(0).optional(),
+  total_amount: z.number().min(0, 'Total amount is required'),
+  brokerage: z.number().min(0).optional(),
+  taxes: z.number().min(0).optional(),
+  other_charges: z.number().min(0).optional(),
+  net_amount: z.number().min(0, 'Net amount is required'),
   notes: z.string().optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
-
-interface SecurityTransaction {
-  id: number;
-  security_name: string;
-  security_symbol: string;
-  broker_name: string;
-  transaction_type: string;
-  quantity: number;
-  price: number;
-  total_amount: number;
-  transaction_date: string;
-  fees?: number;
-  tax?: number;
-  notes?: string;
-}
 
 const TransactionsPage = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -74,11 +65,7 @@ const TransactionsPage = () => {
 
   const { data: transactionsResponse, isLoading } = useQuery({
     queryKey: ['transactions', 'securities', startDate, endDate],
-    queryFn: () =>
-      transactionsService.getAll({
-        start_date: startDate || undefined,
-        end_date: endDate || undefined,
-      }),
+    queryFn: () => transactionsService.getAll(),
   });
 
   const { data: accountsResponse } = useQuery({
@@ -122,11 +109,14 @@ const TransactionsPage = () => {
 
   const handleOpenDialog = () => {
     reset({
-      transaction_type: 'BUY',
+      transaction_type: 'buy',
       quantity: 0,
       price: 0,
-      fees: 0,
-      tax: 0,
+      total_amount: 0,
+      brokerage: 0,
+      taxes: 0,
+      other_charges: 0,
+      net_amount: 0,
       transaction_date: format(new Date(), 'yyyy-MM-dd'),
     });
     setIsDialogOpen(true);
@@ -153,16 +143,16 @@ const TransactionsPage = () => {
   };
 
   const getTransactionBadgeColor = (type: string) => {
-    switch (type) {
-      case 'BUY':
+    switch (type.toLowerCase()) {
+      case 'buy':
         return 'blue';
-      case 'SELL':
+      case 'sell':
         return 'orange';
-      case 'DIVIDEND':
+      case 'dividend':
         return 'green';
-      case 'BONUS':
+      case 'bonus':
         return 'purple';
-      case 'SPLIT':
+      case 'split':
         return 'teal';
       default:
         return 'gray';
@@ -192,11 +182,8 @@ const TransactionsPage = () => {
           <EmptyState
             title="No transactions yet"
             description="Add your first security transaction to get started"
-            action={
-              <Button colorScheme="blue" onClick={handleOpenDialog}>
-                <LuPlus /> Add Transaction
-              </Button>
-            }
+            actionLabel="Add Transaction"
+            onAction={handleOpenDialog}
           />
         ) : (
           <ResponsiveTable
@@ -213,7 +200,7 @@ const TransactionsPage = () => {
                   <Stack gap={0}>
                     <Text fontWeight="medium">{transaction.security_name}</Text>
                     <Text fontSize="sm" color="text.secondary">
-                      {transaction.security_symbol}
+                      {transaction.symbol}
                     </Text>
                   </Stack>
                 ),
@@ -226,42 +213,46 @@ const TransactionsPage = () => {
                 header: 'Type',
                 cell: (transaction) => (
                   <Badge colorScheme={getTransactionBadgeColor(transaction.transaction_type)}>
-                    {transaction.transaction_type}
+                    {transaction.transaction_type.toUpperCase()}
                   </Badge>
                 ),
               },
               {
                 header: 'Quantity',
-                cell: (transaction) => transaction.quantity,
+                cell: (transaction) => parseFloat(transaction.quantity).toFixed(2),
                 textAlign: 'right',
               },
               {
                 header: 'Price',
-                cell: (transaction) => formatCurrency(transaction.price),
+                cell: (transaction) => formatCurrency(parseFloat(transaction.price)),
                 textAlign: 'right',
               },
               {
                 header: 'Total Amount',
                 cell: (transaction) => (
-                  <Text fontWeight="medium">{formatCurrency(transaction.total_amount)}</Text>
+                  <Text fontWeight="medium">{formatCurrency(parseFloat(transaction.total_amount))}</Text>
                 ),
                 textAlign: 'right',
               },
               {
-                header: 'Fees',
-                cell: (transaction) =>
-                  transaction.fees ? formatCurrency(transaction.fees) : '-',
+                header: 'Brokerage',
+                cell: (transaction) => {
+                  const brokerage = parseFloat(transaction.brokerage || '0');
+                  return brokerage > 0 ? formatCurrency(brokerage) : '-';
+                },
                 textAlign: 'right',
               },
               {
-                header: 'Tax',
-                cell: (transaction) =>
-                  transaction.tax ? formatCurrency(transaction.tax) : '-',
+                header: 'Taxes',
+                cell: (transaction) => {
+                  const taxes = parseFloat(transaction.taxes || '0');
+                  return taxes > 0 ? formatCurrency(taxes) : '-';
+                },
                 textAlign: 'right',
               },
             ]}
             mobileConfig={{
-              getKey: (transaction) => transaction.id,
+              getKey: (transaction) => transaction.transaction_id,
               summaryRender: (transaction) => (
                 <Flex justify="space-between" align="center" w="full">
                   <VStack align="start" gap={1} flex={1}>
@@ -270,71 +261,91 @@ const TransactionsPage = () => {
                         {format(new Date(transaction.transaction_date), 'dd MMM yyyy')}
                       </Text>
                       <Badge colorScheme={getTransactionBadgeColor(transaction.transaction_type)}>
-                        {transaction.transaction_type}
+                        {transaction.transaction_type.toUpperCase()}
                       </Badge>
                     </HStack>
                     <Text fontWeight="bold" fontSize="md">
                       {transaction.security_name}
                     </Text>
                     <Text fontSize="lg" fontWeight="semibold">
-                      {formatCurrency(transaction.total_amount)}
+                      {formatCurrency(parseFloat(transaction.total_amount))}
                     </Text>
                   </VStack>
                   <LuChevronDown />
                 </Flex>
               ),
-              detailsRender: (transaction) => (
-                <VStack align="stretch" gap={3}>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Security Symbol
-                    </Text>
-                    <Text fontWeight="medium">{transaction.security_symbol}</Text>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Broker
-                    </Text>
-                    <Text fontWeight="medium">{transaction.broker_name}</Text>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Quantity
-                    </Text>
-                    <Text fontWeight="medium">{transaction.quantity}</Text>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Price per Unit
-                    </Text>
-                    <Text fontWeight="medium">{formatCurrency(transaction.price)}</Text>
-                  </Flex>
-                  {transaction.fees && (
+              detailsRender: (transaction) => {
+                const brokerage = parseFloat(transaction.brokerage || '0');
+                const taxes = parseFloat(transaction.taxes || '0');
+                const otherCharges = parseFloat(transaction.other_charges || '0');
+                
+                return (
+                  <VStack align="stretch" gap={3}>
                     <Flex justify="space-between">
                       <Text color="text.secondary" fontSize="sm">
-                        Fees
+                        Security Symbol
                       </Text>
-                      <Text fontWeight="medium">{formatCurrency(transaction.fees)}</Text>
+                      <Text fontWeight="medium">{transaction.symbol}</Text>
                     </Flex>
-                  )}
-                  {transaction.tax && (
                     <Flex justify="space-between">
                       <Text color="text.secondary" fontSize="sm">
-                        Tax
+                        Broker
                       </Text>
-                      <Text fontWeight="medium">{formatCurrency(transaction.tax)}</Text>
+                      <Text fontWeight="medium">{transaction.broker_name}</Text>
                     </Flex>
-                  )}
-                  {transaction.notes && (
-                    <Flex direction="column" gap={1}>
+                    <Flex justify="space-between">
                       <Text color="text.secondary" fontSize="sm">
-                        Notes
+                        Quantity
                       </Text>
-                      <Text fontSize="sm">{transaction.notes}</Text>
+                      <Text fontWeight="medium">{parseFloat(transaction.quantity).toFixed(2)}</Text>
                     </Flex>
-                  )}
-                </VStack>
-              ),
+                    <Flex justify="space-between">
+                      <Text color="text.secondary" fontSize="sm">
+                        Price per Unit
+                      </Text>
+                      <Text fontWeight="medium">{formatCurrency(parseFloat(transaction.price))}</Text>
+                    </Flex>
+                    {brokerage > 0 && (
+                      <Flex justify="space-between">
+                        <Text color="text.secondary" fontSize="sm">
+                          Brokerage
+                        </Text>
+                        <Text fontWeight="medium">{formatCurrency(brokerage)}</Text>
+                      </Flex>
+                    )}
+                    {taxes > 0 && (
+                      <Flex justify="space-between">
+                        <Text color="text.secondary" fontSize="sm">
+                          Taxes
+                        </Text>
+                        <Text fontWeight="medium">{formatCurrency(taxes)}</Text>
+                      </Flex>
+                    )}
+                    {otherCharges > 0 && (
+                      <Flex justify="space-between">
+                        <Text color="text.secondary" fontSize="sm">
+                          Other Charges
+                        </Text>
+                        <Text fontWeight="medium">{formatCurrency(otherCharges)}</Text>
+                      </Flex>
+                    )}
+                    <Flex justify="space-between">
+                      <Text color="text.secondary" fontSize="sm">
+                        Net Amount
+                      </Text>
+                      <Text fontWeight="bold">{formatCurrency(parseFloat(transaction.net_amount))}</Text>
+                    </Flex>
+                    {transaction.notes && (
+                      <Flex direction="column" gap={1}>
+                        <Text color="text.secondary" fontSize="sm">
+                          Notes
+                        </Text>
+                        <Text fontSize="sm">{transaction.notes}</Text>
+                      </Flex>
+                    )}
+                  </VStack>
+                );
+              },
             }}
           />
         )}
@@ -345,29 +356,32 @@ const TransactionsPage = () => {
         onOpenChange={(e) => !e.open && handleCloseDialog()}
         size="lg"
       >
-        <DialogContent>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <DialogHeader>
-              <DialogTitle>Add Transaction</DialogTitle>
-            </DialogHeader>
-            <DialogCloseTrigger />
+        <Portal>
+          <DialogBackdrop />
+          <DialogPositioner>
+            <DialogContent>
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <DialogHeader>
+                  <DialogTitle>Add Transaction</DialogTitle>
+                </DialogHeader>
+                <DialogCloseTrigger />
             <DialogBody>
               <Stack gap={4}>
                 <Controller
-                  name="broker_account_id"
+                  name="account_id"
                   control={control}
                   render={({ field }) => (
                     <SelectField
                       label="Broker Account"
                       required
-                      error={errors.broker_account_id?.message}
+                      error={errors.account_id?.message}
                       placeholder="Select broker account"
                       value={field.value?.toString()}
                       onChange={(e) => field.onChange(Number(e.target.value))}
                     >
                       {brokerAccounts.map((account: any) => (
-                        <option key={account.id} value={account.id}>
-                          {account.broker_name} - {account.account_number}
+                        <option key={account.account_id} value={account.account_id}>
+                          {account.broker?.broker_name || 'Unknown'} - {account.account_number}
                         </option>
                       ))}
                     </SelectField>
@@ -387,7 +401,7 @@ const TransactionsPage = () => {
                       onChange={(e) => field.onChange(Number(e.target.value))}
                     >
                       {securities.map((security: any) => (
-                        <option key={security.id} value={security.id}>
+                        <option key={security.security_id} value={security.security_id}>
                           {security.name} ({security.symbol})
                         </option>
                       ))}
@@ -399,26 +413,20 @@ const TransactionsPage = () => {
                   name="transaction_type"
                   control={control}
                   render={({ field }) => (
-                    <div>
-                      <label>Transaction Type *</label>
-                      <Select.Root value={[field.value]} onValueChange={(e) => field.onChange(e.value[0])}>
-                        <Select.Trigger>
-                          <Select.ValueText placeholder="Select type" />
-                        </Select.Trigger>
-                        <Select.Content>
-                          <Select.Item value="BUY">Buy</Select.Item>
-                          <Select.Item value="SELL">Sell</Select.Item>
-                          <Select.Item value="DIVIDEND">Dividend</Select.Item>
-                          <Select.Item value="BONUS">Bonus</Select.Item>
-                          <Select.Item value="SPLIT">Split</Select.Item>
-                        </Select.Content>
-                      </Select.Root>
-                      {errors.transaction_type && (
-                        <Text color="red.500" fontSize="sm">
-                          {errors.transaction_type.message}
-                        </Text>
-                      )}
-                    </div>
+                    <SelectField
+                      label="Transaction Type"
+                      required
+                      error={errors.transaction_type?.message}
+                      placeholder="Select type"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      <option value="buy">Buy</option>
+                      <option value="sell">Sell</option>
+                      <option value="dividend">Dividend</option>
+                      <option value="bonus">Bonus</option>
+                      <option value="split">Split</option>
+                    </SelectField>
                   )}
                 />
 
@@ -432,7 +440,7 @@ const TransactionsPage = () => {
                     {...register('quantity', { valueAsNumber: true })}
                   />
                   <InputField
-                    label="Price"
+                    label="Price per Unit"
                     type="number"
                     step="0.01"
                     required
@@ -451,20 +459,47 @@ const TransactionsPage = () => {
 
                 <HStack>
                   <InputField
-                    label="Fees"
+                    label="Total Amount"
                     type="number"
                     step="0.01"
-                    error={errors.fees?.message}
-                    {...register('fees', { valueAsNumber: true })}
+                    required
+                    error={errors.total_amount?.message}
+                    {...register('total_amount', { valueAsNumber: true })}
                   />
                   <InputField
-                    label="Tax"
+                    label="Net Amount"
                     type="number"
                     step="0.01"
-                    error={errors.tax?.message}
-                    {...register('tax', { valueAsNumber: true })}
+                    required
+                    error={errors.net_amount?.message}
+                    {...register('net_amount', { valueAsNumber: true })}
                   />
                 </HStack>
+
+                <HStack>
+                  <InputField
+                    label="Brokerage"
+                    type="number"
+                    step="0.01"
+                    error={errors.brokerage?.message}
+                    {...register('brokerage', { valueAsNumber: true })}
+                  />
+                  <InputField
+                    label="Taxes"
+                    type="number"
+                    step="0.01"
+                    error={errors.taxes?.message}
+                    {...register('taxes', { valueAsNumber: true })}
+                  />
+                </HStack>
+
+                <InputField
+                  label="Other Charges"
+                  type="number"
+                  step="0.01"
+                  error={errors.other_charges?.message}
+                  {...register('other_charges', { valueAsNumber: true })}
+                />
 
                 <InputField
                   label="Notes"
@@ -484,12 +519,14 @@ const TransactionsPage = () => {
                 colorScheme="blue"
                 loading={createMutation.isPending}
               >
-                Create
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </DialogRoot>
+                  Create
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </DialogPositioner>
+      </Portal>
+    </DialogRoot>
     </Container>
   );
 };

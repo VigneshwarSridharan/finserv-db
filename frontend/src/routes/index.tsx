@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { Box, Spinner } from '@chakra-ui/react';
+import RouteErrorBoundary from '../components/common/RouteErrorBoundary';
 
 // Lazy load pages
 const LoginPage = lazy(() => import('../features/auth/LoginPage'));
@@ -37,6 +38,13 @@ const LoadingFallback = () => (
   </Box>
 );
 
+// Route element wrapper with error boundary
+const RouteElement = ({ children }: { children: React.ReactNode }) => (
+  <RouteErrorBoundary>
+    {children}
+  </RouteErrorBoundary>
+);
+
 // Private Route wrapper
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuthStore();
@@ -58,7 +66,9 @@ const AppRoutes = () => {
           path="/login"
           element={
             <PublicRoute>
-              <LoginPage />
+              <RouteElement>
+                <LoginPage />
+              </RouteElement>
             </PublicRoute>
           }
         />
@@ -66,7 +76,9 @@ const AppRoutes = () => {
           path="/register"
           element={
             <PublicRoute>
-              <RegisterPage />
+              <RouteElement>
+                <RegisterPage />
+              </RouteElement>
             </PublicRoute>
           }
         />
@@ -81,24 +93,24 @@ const AppRoutes = () => {
           }
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="securities" element={<SecuritiesPage />} />
-          <Route path="securities/brokers" element={<BrokersPage />} />
-          <Route path="securities/holdings" element={<HoldingsPage />} />
-          <Route path="securities/transactions" element={<TransactionsPage />} />
-          <Route path="banking" element={<BankingPage />} />
-          <Route path="banking/accounts" element={<BankAccountsPage />} />
-          <Route path="banking/fixed-deposits" element={<FixedDepositsPage />} />
-          <Route path="banking/recurring-deposits" element={<RecurringDepositsPage />} />
-          <Route path="assets" element={<AssetsPage />} />
-          <Route path="assets/list" element={<AssetsListPage />} />
-          <Route path="assets/categories" element={<CategoriesPage />} />
-          <Route path="portfolio" element={<PortfolioPage />} />
-          <Route path="portfolio/goals" element={<GoalsPage />} />
-          <Route path="portfolio/alerts" element={<AlertsPage />} />
-          <Route path="portfolio/watchlist" element={<WatchlistPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="settings" element={<ProfilePage />} />
+          <Route path="dashboard" element={<RouteElement><DashboardPage /></RouteElement>} />
+          <Route path="securities" element={<RouteElement><SecuritiesPage /></RouteElement>} />
+          <Route path="securities/brokers" element={<RouteElement><BrokersPage /></RouteElement>} />
+          <Route path="securities/holdings" element={<RouteElement><HoldingsPage /></RouteElement>} />
+          <Route path="securities/transactions" element={<RouteElement><TransactionsPage /></RouteElement>} />
+          <Route path="banking" element={<RouteElement><BankingPage /></RouteElement>} />
+          <Route path="banking/accounts" element={<RouteElement><BankAccountsPage /></RouteElement>} />
+          <Route path="banking/fixed-deposits" element={<RouteElement><FixedDepositsPage /></RouteElement>} />
+          <Route path="banking/recurring-deposits" element={<RouteElement><RecurringDepositsPage /></RouteElement>} />
+          <Route path="assets" element={<RouteElement><AssetsPage /></RouteElement>} />
+          <Route path="assets/list" element={<RouteElement><AssetsListPage /></RouteElement>} />
+          <Route path="assets/categories" element={<RouteElement><CategoriesPage /></RouteElement>} />
+          <Route path="portfolio" element={<RouteElement><PortfolioPage /></RouteElement>} />
+          <Route path="portfolio/goals" element={<RouteElement><GoalsPage /></RouteElement>} />
+          <Route path="portfolio/alerts" element={<RouteElement><AlertsPage /></RouteElement>} />
+          <Route path="portfolio/watchlist" element={<RouteElement><WatchlistPage /></RouteElement>} />
+          <Route path="profile" element={<RouteElement><ProfilePage /></RouteElement>} />
+          <Route path="settings" element={<RouteElement><ProfilePage /></RouteElement>} />
         </Route>
 
         {/* 404 */}

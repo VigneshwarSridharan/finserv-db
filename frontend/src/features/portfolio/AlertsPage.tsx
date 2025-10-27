@@ -14,19 +14,7 @@ import { format } from 'date-fns';
 import { portfolioAlertsService } from '../../api/services/portfolio-features.service';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-
-interface PortfolioAlert {
-  id: number;
-  alert_type: string;
-  alert_name: string;
-  condition_type: string;
-  threshold_value: number;
-  current_value?: number;
-  is_triggered: boolean;
-  is_active: boolean;
-  created_at: string;
-  triggered_at?: string;
-}
+import type { PortfolioAlert } from '../../types/domain.types';
 
 const AlertsPage = () => {
   const { data: response, isLoading } = useQuery({
@@ -38,25 +26,27 @@ const AlertsPage = () => {
   const activeAlerts = alerts.filter((alert) => alert.is_active);
   const triggeredAlerts = alerts.filter((alert) => alert.is_triggered);
 
-  const formatValue = (value: number, type: string) => {
-    if (type === 'PRICE_TARGET' || type === 'STOP_LOSS') {
+  const formatValue = (value: string | number | undefined, type: string) => {
+    if (!value) return '-';
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (type.toLowerCase().includes('price') || type.toLowerCase().includes('loss') || type.toLowerCase().includes('target')) {
       return new Intl.NumberFormat('en-IN', {
         style: 'currency',
         currency: 'INR',
-      }).format(value);
+      }).format(numValue);
     }
-    return value.toString();
+    return numValue.toString();
   };
 
   const getAlertTypeBadgeColor = (type: string) => {
-    switch (type) {
-      case 'PRICE_TARGET':
+    switch (type.toLowerCase()) {
+      case 'price_target':
         return 'green';
-      case 'STOP_LOSS':
+      case 'stop_loss':
         return 'red';
-      case 'MATURITY_DATE':
+      case 'maturity_date':
         return 'blue';
-      case 'REBALANCE':
+      case 'rebalance':
         return 'orange';
       default:
         return 'gray';
@@ -88,11 +78,8 @@ const AlertsPage = () => {
           <EmptyState
             title="No alerts yet"
             description="Create alerts to stay notified about important portfolio events"
-            action={
-              <Button colorScheme="blue">
-                <LuPlus /> Add Alert
-              </Button>
-            }
+            actionLabel="Add Alert"
+            onAction={() => {}}
           />
         ) : (
           <Table.Root variant="outline">
@@ -110,7 +97,7 @@ const AlertsPage = () => {
             </Table.Header>
             <Table.Body>
               {alerts.map((alert) => (
-                <Table.Row key={alert.id} bg={alert.is_triggered ? 'red.50' : undefined}>
+                <Table.Row key={alert.alert_id} bg={alert.is_triggered ? 'red.50' : undefined}>
                   <Table.Cell fontWeight="medium">{alert.alert_name}</Table.Cell>
                   <Table.Cell>
                     <Badge colorScheme={getAlertTypeBadgeColor(alert.alert_type)}>
@@ -124,12 +111,10 @@ const AlertsPage = () => {
                     {formatValue(alert.threshold_value, alert.alert_type)}
                   </Table.Cell>
                   <Table.Cell textAlign="right">
-                    {alert.current_value
-                      ? formatValue(alert.current_value, alert.alert_type)
-                      : '-'}
+                    {formatValue(alert.current_value, alert.alert_type)}
                   </Table.Cell>
                   <Table.Cell>
-                    {format(new Date(alert.created_at), 'dd MMM yyyy')}
+                    {alert.created_at ? format(new Date(alert.created_at), 'dd MMM yyyy') : '-'}
                   </Table.Cell>
                   <Table.Cell>
                     <Stack gap={1}>

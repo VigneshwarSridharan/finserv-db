@@ -1,6 +1,5 @@
 import {
   Box,
-  Button,
   Flex,
   Heading,
   IconButton,
@@ -43,8 +42,19 @@ const Header = () => {
       >
         {/* Left Section */}
         <Flex alignItems="center" gap={3}>
+          {/* Mobile Hamburger Menu */}
           <IconButton
-            aria-label="Toggle menu"
+            aria-label="Open menu"
+            variant="ghost"
+            onClick={() => useNavigationStore.getState().toggleMobileMenu()}
+            display={{ base: 'flex', lg: 'none' }}
+          >
+            <FiMenu />
+          </IconButton>
+
+          {/* Desktop Sidebar Toggle */}
+          <IconButton
+            aria-label="Toggle sidebar"
             variant="ghost"
             onClick={toggleSidebar}
             display={{ base: 'none', lg: 'flex' }}

@@ -12,7 +12,7 @@ import type {
 } from '../../types/domain.types';
 
 // Banks
-export const bankService = {
+export const banksService = {
   getAll: async (params?: PaginationParams): Promise<ApiResponse<Bank[]>> => {
     return api.get<Bank[]>('/banks', { params });
   },

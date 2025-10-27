@@ -5,7 +5,7 @@ import {
   FiTrendingUp,
   FiDollarSign,
   FiPackage,
-  FiUser,
+  FiPieChart,
 } from 'react-icons/fi';
 
 const mobileMenuItems = [
@@ -13,7 +13,7 @@ const mobileMenuItems = [
   { icon: FiTrendingUp, label: 'Securities', path: '/securities' },
   { icon: FiDollarSign, label: 'Banking', path: '/banking' },
   { icon: FiPackage, label: 'Assets', path: '/assets' },
-  { icon: FiUser, label: 'Profile', path: '/profile' },
+  { icon: FiPieChart, label: 'Portfolio', path: '/portfolio' },
 ];
 
 const MobileNav = () => {

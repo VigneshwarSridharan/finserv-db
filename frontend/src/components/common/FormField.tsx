@@ -9,11 +9,8 @@ interface BaseFieldProps {
   helperText?: string;
 }
 
-interface InputFieldProps extends BaseFieldProps {
-  type?: string;
-  placeholder?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+interface InputFieldProps extends BaseFieldProps, Omit<React.InputHTMLAttributes<HTMLInputElement>, 'ref'> {
+  // All HTML input attributes are now supported
 }
 
 interface TextareaFieldProps extends BaseFieldProps {

@@ -13,11 +13,13 @@ import {
   DialogTitle,
   DialogCloseTrigger,
   DialogActionTrigger,
+  DialogBackdrop,
+  DialogPositioner,
+  Portal,
   HStack,
   Badge,
   IconButton,
   Grid,
-  Select,
   VStack,
   Flex,
   Text,
@@ -34,31 +36,19 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import { InputField, SelectField } from '../../components/common/FormField';
 import StatCard from '../../components/common/StatCard';
 import ResponsiveTable from '../../components/common/ResponsiveTable';
+import type { BankAccount } from '../../types/domain.types';
 
 const accountSchema = z.object({
-  bank_id: z.number({ required_error: 'Bank is required' }),
+  bank_id: z.number({ message: 'Bank is required' }),
   account_number: z.string().min(1, 'Account number is required'),
-  account_type: z.enum(['SAVINGS', 'CURRENT', 'SALARY']),
+  account_type: z.enum(['savings', 'current', 'fixed_deposit', 'recurring_deposit', 'nro', 'nre']),
   ifsc_code: z.string().min(11, 'IFSC code must be 11 characters'),
-  branch: z.string().optional(),
-  account_holder_name: z.string().min(1, 'Account holder name is required'),
-  opening_balance: z.number().min(0).optional(),
-  current_balance: z.number().min(0).optional(),
+  branch_name: z.string().optional(),
+  account_name: z.string().optional(),
+  opened_date: z.string().optional(),
 });
 
 type AccountFormData = z.infer<typeof accountSchema>;
-
-interface BankAccount {
-  id: number;
-  bank_name: string;
-  account_number: string;
-  account_type: string;
-  ifsc_code: string;
-  branch?: string;
-  account_holder_name: string;
-  current_balance: number;
-  is_active: boolean;
-}
 
 const BankAccountsPage = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -146,16 +136,18 @@ const BankAccountsPage = () => {
     if (account) {
       setSelectedAccount(account);
       reset({
-        ...account,
-        bank_id: 1, // Will need to map from bank_name
+        bank_id: account.bank_id,
+        account_number: account.account_number,
         account_type: account.account_type as any,
+        ifsc_code: account.ifsc_code || '',
+        branch_name: account.branch_name,
+        account_name: account.account_name,
+        opened_date: account.opened_date,
       });
     } else {
       setSelectedAccount(null);
       reset({
-        account_type: 'SAVINGS',
-        opening_balance: 0,
-        current_balance: 0,
+        account_type: 'savings',
       });
     }
     setIsDialogOpen(true);
@@ -169,7 +161,7 @@ const BankAccountsPage = () => {
 
   const onSubmit = (data: AccountFormData) => {
     if (selectedAccount) {
-      updateMutation.mutate({ id: selectedAccount.id, data });
+      updateMutation.mutate({ id: selectedAccount.account_id, data });
     } else {
       createMutation.mutate(data);
     }
@@ -182,14 +174,13 @@ const BankAccountsPage = () => {
 
   const confirmDelete = () => {
     if (selectedAccount) {
-      deleteMutation.mutate(selectedAccount.id);
+      deleteMutation.mutate(selectedAccount.account_id);
     }
   };
 
   const accounts: BankAccount[] = accountsResponse?.data || [];
   const banks = banksResponse?.data || [];
 
-  const totalBalance = accounts.reduce((sum, acc) => sum + (acc.current_balance || 0), 0);
   const activeAccounts = accounts.filter((acc) => acc.is_active).length;
 
   const formatCurrency = (value: number) => {
@@ -211,12 +202,7 @@ const BankAccountsPage = () => {
           </Button>
         </HStack>
 
-        <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={4}>
-          <StatCard
-            label="Total Balance"
-            value={formatCurrency(totalBalance)}
-            colorScheme="green"
-          />
+        <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={4}>
           <StatCard
             label="Active Accounts"
             value={activeAccounts.toString()}
@@ -233,11 +219,8 @@ const BankAccountsPage = () => {
           <EmptyState
             title="No bank accounts yet"
             description="Add your first bank account to get started"
-            action={
-              <Button colorScheme="blue" onClick={() => handleOpenDialog()}>
-                <LuPlus /> Add Account
-              </Button>
-            }
+            actionLabel="Add Account"
+            onAction={() => handleOpenDialog()}
           />
         ) : (
           <ResponsiveTable
@@ -245,7 +228,7 @@ const BankAccountsPage = () => {
             columns={[
               {
                 header: 'Bank',
-                cell: (account) => <Text fontWeight="medium">{account.bank_name}</Text>,
+                cell: (account) => <Text fontWeight="medium">{account.bank?.bank_name || '-'}</Text>,
               },
               {
                 header: 'Account Number',
@@ -257,18 +240,11 @@ const BankAccountsPage = () => {
               },
               {
                 header: 'IFSC',
-                cell: (account) => account.ifsc_code,
+                cell: (account) => account.ifsc_code || '-',
               },
               {
                 header: 'Branch',
-                cell: (account) => account.branch || '-',
-              },
-              {
-                header: 'Balance',
-                cell: (account) => (
-                  <Text fontWeight="medium">{formatCurrency(account.current_balance)}</Text>
-                ),
-                textAlign: 'right',
+                cell: (account) => account.branch_name || '-',
               },
               {
                 header: 'Status',
@@ -302,7 +278,7 @@ const BankAccountsPage = () => {
               },
             ]}
             mobileConfig={{
-              getKey: (account) => account.id,
+              getKey: (account) => account.account_id,
               summaryRender: (account) => {
                 const maskedAccount =
                   account.account_number.slice(0, 4) +
@@ -312,44 +288,16 @@ const BankAccountsPage = () => {
                   <Flex justify="space-between" align="center" w="full">
                     <VStack align="start" gap={1} flex={1}>
                       <Text fontWeight="bold" fontSize="md">
-                        {account.bank_name}
+                        {account.bank?.bank_name || 'Unknown Bank'}
                       </Text>
                       <Text fontSize="sm" color="text.secondary">
                         {maskedAccount}
                       </Text>
-                      <HStack gap={2}>
-                        <Text fontSize="lg" fontWeight="semibold">
-                          {formatCurrency(account.current_balance)}
-                        </Text>
-                        <Badge colorScheme={account.is_active ? 'green' : 'gray'}>
-                          {account.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </HStack>
+                      <Badge colorScheme={account.is_active ? 'green' : 'gray'}>
+                        {account.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
                     </VStack>
-                    <HStack gap={2}>
-                      <IconButton
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenDialog(account);
-                        }}
-                      >
-                        <LuPencil />
-                      </IconButton>
-                      <IconButton
-                        size="sm"
-                        variant="ghost"
-                        colorScheme="red"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(account);
-                        }}
-                      >
-                        <LuTrash2 />
-                      </IconButton>
-                      <LuChevronDown />
-                    </HStack>
+                    <LuChevronDown />
                   </Flex>
                 );
               },
@@ -371,19 +319,40 @@ const BankAccountsPage = () => {
                     <Text color="text.secondary" fontSize="sm">
                       IFSC Code
                     </Text>
-                    <Text fontWeight="medium">{account.ifsc_code}</Text>
+                    <Text fontWeight="medium">{account.ifsc_code || '-'}</Text>
                   </Flex>
                   <Flex justify="space-between">
                     <Text color="text.secondary" fontSize="sm">
                       Branch
                     </Text>
-                    <Text fontWeight="medium">{account.branch || 'Not specified'}</Text>
+                    <Text fontWeight="medium">{account.branch_name || 'Not specified'}</Text>
                   </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Account Holder
-                    </Text>
-                    <Text fontWeight="medium">{account.account_holder_name}</Text>
+                  {account.account_name && (
+                    <Flex justify="space-between">
+                      <Text color="text.secondary" fontSize="sm">
+                        Account Name
+                      </Text>
+                      <Text fontWeight="medium">{account.account_name}</Text>
+                    </Flex>
+                  )}
+                  <Flex pt={2} borderTopWidth="1px" mt={2} gap={2}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      flex={1}
+                      onClick={() => handleOpenDialog(account)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      colorScheme="red"
+                      variant="outline"
+                      flex={1}
+                      onClick={() => handleDelete(account)}
+                    >
+                      Delete
+                    </Button>
                   </Flex>
                 </VStack>
               ),
@@ -393,110 +362,109 @@ const BankAccountsPage = () => {
       </Stack>
 
       <DialogRoot open={isDialogOpen} onOpenChange={(e) => !e.open && handleCloseDialog()}>
-        <DialogContent>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <DialogHeader>
-              <DialogTitle>
-                {selectedAccount ? 'Edit Account' : 'Add Account'}
-              </DialogTitle>
-            </DialogHeader>
-            <DialogCloseTrigger />
-            <DialogBody>
-              <Stack gap={4}>
-                <Controller
-                  name="bank_id"
-                  control={control}
-                  render={({ field }) => (
-                    <SelectField
-                      label="Bank"
+        <Portal>
+          <DialogBackdrop />
+          <DialogPositioner>
+            <DialogContent>
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <DialogHeader>
+                  <DialogTitle>
+                    {selectedAccount ? 'Edit Account' : 'Add Account'}
+                  </DialogTitle>
+                </DialogHeader>
+                <DialogCloseTrigger />
+                <DialogBody>
+                  <Stack gap={4}>
+                    <Controller
+                      name="bank_id"
+                      control={control}
+                      render={({ field }) => (
+                        <SelectField
+                          label="Bank"
+                          required
+                          error={errors.bank_id?.message}
+                          placeholder="Select bank"
+                          value={field.value?.toString()}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        >
+                          {banks.map((bank: any) => (
+                            <option key={bank.bank_id} value={bank.bank_id}>
+                              {bank.bank_name}
+                            </option>
+                          ))}
+                        </SelectField>
+                      )}
+                    />
+                    <InputField
+                      label="Account Number"
                       required
-                      error={errors.bank_id?.message}
-                      placeholder="Select bank"
-                      value={field.value?.toString()}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    >
-                      {banks.map((bank: any) => (
-                        <option key={bank.id} value={bank.id}>
-                          {bank.name}
-                        </option>
-                      ))}
-                    </SelectField>
-                  )}
-                />
-                <InputField
-                  label="Account Number"
-                  required
-                  error={errors.account_number?.message}
-                  {...register('account_number')}
-                />
-                <Controller
-                  name="account_type"
-                  control={control}
-                  render={({ field }) => (
-                    <div>
-                      <label>Account Type *</label>
-                      <Select.Root value={[field.value]} onValueChange={(e) => field.onChange(e.value[0])}>
-                        <Select.Trigger>
-                          <Select.ValueText placeholder="Select type" />
-                        </Select.Trigger>
-                        <Select.Content>
-                          <Select.Item value="SAVINGS">Savings</Select.Item>
-                          <Select.Item value="CURRENT">Current</Select.Item>
-                          <Select.Item value="SALARY">Salary</Select.Item>
-                        </Select.Content>
-                      </Select.Root>
-                    </div>
-                  )}
-                />
-                <InputField
-                  label="IFSC Code"
-                  required
-                  error={errors.ifsc_code?.message}
-                  {...register('ifsc_code')}
-                />
-                <InputField
-                  label="Branch"
-                  error={errors.branch?.message}
-                  {...register('branch')}
-                />
-                <InputField
-                  label="Account Holder Name"
-                  required
-                  error={errors.account_holder_name?.message}
-                  {...register('account_holder_name')}
-                />
-                <InputField
-                  label="Opening Balance"
-                  type="number"
-                  step="0.01"
-                  error={errors.opening_balance?.message}
-                  {...register('opening_balance', { valueAsNumber: true })}
-                />
-                <InputField
-                  label="Current Balance"
-                  type="number"
-                  step="0.01"
-                  error={errors.current_balance?.message}
-                  {...register('current_balance', { valueAsNumber: true })}
-                />
-              </Stack>
-            </DialogBody>
-            <DialogFooter>
-              <DialogActionTrigger asChild>
-                <Button variant="outline" onClick={handleCloseDialog}>
-                  Cancel
-                </Button>
-              </DialogActionTrigger>
-              <Button
-                type="submit"
-                colorScheme="blue"
-                loading={createMutation.isPending || updateMutation.isPending}
-              >
-                {selectedAccount ? 'Update' : 'Create'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+                      error={errors.account_number?.message}
+                      {...register('account_number')}
+                    />
+                    <Controller
+                      name="account_type"
+                      control={control}
+                      render={({ field }) => (
+                        <SelectField
+                          label="Account Type"
+                          required
+                          error={errors.account_type?.message}
+                          placeholder="Select type"
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                        >
+                          <option value="savings">Savings</option>
+                          <option value="current">Current</option>
+                          <option value="fixed_deposit">Fixed Deposit</option>
+                          <option value="recurring_deposit">Recurring Deposit</option>
+                          <option value="nro">NRO</option>
+                          <option value="nre">NRE</option>
+                        </SelectField>
+                      )}
+                    />
+                    <InputField
+                      label="IFSC Code"
+                      required
+                      error={errors.ifsc_code?.message}
+                      {...register('ifsc_code')}
+                    />
+                    <InputField
+                      label="Branch Name"
+                      error={errors.branch_name?.message}
+                      {...register('branch_name')}
+                    />
+                    <InputField
+                      label="Account Name"
+                      error={errors.account_name?.message}
+                      {...register('account_name')}
+                      placeholder="Optional account nickname"
+                    />
+                    <InputField
+                      label="Opened Date"
+                      type="date"
+                      error={errors.opened_date?.message}
+                      {...register('opened_date')}
+                    />
+                  </Stack>
+                </DialogBody>
+                <DialogFooter>
+                  <DialogActionTrigger asChild>
+                    <Button variant="outline" onClick={handleCloseDialog}>
+                      Cancel
+                    </Button>
+                  </DialogActionTrigger>
+                  <Button
+                    type="submit"
+                    colorScheme="blue"
+                    loading={createMutation.isPending || updateMutation.isPending}
+                  >
+                    {selectedAccount ? 'Update' : 'Create'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </DialogPositioner>
+        </Portal>
       </DialogRoot>
 
       <ConfirmDialog

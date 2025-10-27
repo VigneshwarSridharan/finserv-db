@@ -24,7 +24,7 @@ export const portfolioOverviewService = {
 };
 
 // Portfolio Goals
-export const portfolioGoalService = {
+export const portfolioGoalsService = {
   getAll: async (params?: PaginationParams): Promise<ApiResponse<PortfolioGoal[]>> => {
     return api.get<PortfolioGoal[]>('/portfolio/goals', { params });
   },

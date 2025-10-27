@@ -12,37 +12,24 @@ import {
 } from '@chakra-ui/react';
 import { LuChevronDown } from 'react-icons/lu';
 import { format, differenceInDays } from 'date-fns';
-import { fixedDepositsService } from '../../api/services/banking.service';
+import { fixedDepositService } from '../../api/services/banking.service';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import StatCard from '../../components/common/StatCard';
 import ResponsiveTable from '../../components/common/ResponsiveTable';
-
-interface FixedDeposit {
-  id: number;
-  bank_name: string;
-  account_number: string;
-  fd_number: string;
-  principal_amount: number;
-  interest_rate: number;
-  start_date: string;
-  maturity_date: string;
-  maturity_amount: number;
-  status: string;
-  tenure_months: number;
-}
+import type { FixedDeposit } from '../../types/domain.types';
 
 const FixedDepositsPage = () => {
   const { data: response, isLoading } = useQuery({
     queryKey: ['fixedDeposits'],
-    queryFn: () => fixedDepositsService.getAll(),
+    queryFn: () => fixedDepositService.getAll(),
   });
 
   const fds: FixedDeposit[] = response?.data || [];
 
-  const totalPrincipal = fds.reduce((sum, fd) => sum + fd.principal_amount, 0);
-  const totalMaturityAmount = fds.reduce((sum, fd) => sum + fd.maturity_amount, 0);
-  const activeFDs = fds.filter((fd) => fd.status === 'ACTIVE').length;
+  const totalPrincipal = fds.reduce((sum, fd) => sum + parseFloat(fd.principal_amount || '0'), 0);
+  const totalMaturityAmount = fds.reduce((sum, fd) => sum + parseFloat(fd.maturity_amount || '0'), 0);
+  const activeFDs = fds.filter((fd) => fd.is_active).length;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -51,17 +38,8 @@ const FixedDepositsPage = () => {
     }).format(value);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'green';
-      case 'MATURED':
-        return 'blue';
-      case 'CLOSED':
-        return 'gray';
-      default:
-        return 'gray';
-    }
+  const getStatusColor = (isActive: boolean) => {
+    return isActive ? 'green' : 'gray';
   };
 
   const getDaysToMaturity = (maturityDate: string) => {

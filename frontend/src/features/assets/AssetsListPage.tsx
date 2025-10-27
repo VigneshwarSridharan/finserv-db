@@ -22,17 +22,7 @@ import StatCard from '../../components/common/StatCard';
 import SearchBar from '../../components/common/SearchBar';
 import ResponsiveTable from '../../components/common/ResponsiveTable';
 import { useNavigate } from 'react-router-dom';
-
-interface Asset {
-  id: number;
-  name: string;
-  asset_type: string;
-  category_name: string;
-  purchase_price: number;
-  purchase_date: string;
-  current_value: number;
-  description?: string;
-}
+import type { Asset } from '../../types/domain.types';
 
 const AssetsListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,11 +36,11 @@ const AssetsListPage = () => {
   const assets: Asset[] = response?.data || [];
 
   const filteredAssets = assets.filter((asset) =>
-    asset.name.toLowerCase().includes(searchTerm.toLowerCase())
+    asset.asset_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalPurchaseValue = assets.reduce((sum, asset) => sum + asset.purchase_price, 0);
-  const totalCurrentValue = assets.reduce((sum, asset) => sum + asset.current_value, 0);
+  const totalPurchaseValue = assets.reduce((sum, asset) => sum + parseFloat(asset.purchase_price || '0'), 0);
+  const totalCurrentValue = assets.reduce((sum, asset) => sum + parseFloat(asset.current_value || '0'), 0);
   const totalGain = totalCurrentValue - totalPurchaseValue;
 
   const formatCurrency = (value: number) => {
@@ -60,19 +50,28 @@ const AssetsListPage = () => {
     }).format(value);
   };
 
-  const getAssetTypeBadgeColor = (type: string) => {
-    switch (type) {
-      case 'REAL_ESTATE':
-        return 'purple';
-      case 'GOLD':
+  const getCategoryBadgeColor = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'precious_metal':
         return 'yellow';
-      case 'VEHICLE':
+      case 'real_estate':
+        return 'purple';
+      case 'commodity':
+        return 'orange';
+      case 'collectible':
         return 'blue';
-      case 'OTHER':
+      case 'other':
         return 'gray';
       default:
         return 'gray';
     }
+  };
+
+  const formatCategoryType = (type: string) => {
+    return type
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -91,22 +90,22 @@ const AssetsListPage = () => {
           <StatCard
             label="Total Purchase Value"
             value={formatCurrency(totalPurchaseValue)}
-            colorScheme="blue"
+            color="blue.600"
           />
           <StatCard
             label="Current Value"
             value={formatCurrency(totalCurrentValue)}
-            colorScheme="green"
+            color="green.600"
           />
           <StatCard
             label="Total Gain/Loss"
             value={formatCurrency(totalGain)}
-            colorScheme={totalGain >= 0 ? 'green' : 'red'}
+            color={totalGain >= 0 ? 'green.600' : 'red.600'}
           />
           <StatCard
             label="Total Assets"
             value={assets.length.toString()}
-            colorScheme="purple"
+            color="purple.600"
           />
         </Grid>
 
@@ -124,13 +123,8 @@ const AssetsListPage = () => {
                 ? 'Try adjusting your search'
                 : 'Add your first asset to start tracking'
             }
-            action={
-              !searchTerm ? (
-                <Button colorScheme="blue" onClick={() => navigate('/assets/new')}>
-                  <LuPlus /> Add Asset
-                </Button>
-              ) : undefined
-            }
+            actionLabel={!searchTerm ? 'Add Asset' : undefined}
+            onAction={!searchTerm ? () => navigate('/assets/new') : undefined}
           />
         ) : (
           <ResponsiveTable
@@ -138,53 +132,63 @@ const AssetsListPage = () => {
             columns={[
               {
                 header: 'Name',
-                cell: (asset) => <Text fontWeight="medium">{asset.name}</Text>,
-              },
-              {
-                header: 'Type',
                 cell: (asset) => (
-                  <Badge colorScheme={getAssetTypeBadgeColor(asset.asset_type)}>
-                    {asset.asset_type.replace('_', ' ')}
-                  </Badge>
+                  <VStack align="start" gap={0}>
+                    <Text fontWeight="medium">{asset.asset_name}</Text>
+                    {asset.subcategory && (
+                      <Text fontSize="xs" color="text.secondary">
+                        {asset.subcategory.subcategory_name}
+                      </Text>
+                    )}
+                  </VStack>
                 ),
               },
               {
+                header: 'Type',
+                cell: (asset) => asset.category ? (
+                  <Badge colorScheme={getCategoryBadgeColor(asset.category.category_type)}>
+                    {formatCategoryType(asset.category.category_type)}
+                  </Badge>
+                ) : '-',
+              },
+              {
                 header: 'Category',
-                cell: (asset) => asset.category_name,
+                cell: (asset) => asset.category?.category_name || '-',
               },
               {
                 header: 'Purchase Date',
-                cell: (asset) => format(new Date(asset.purchase_date), 'dd MMM yyyy'),
+                cell: (asset) => asset.purchase_date ? format(new Date(asset.purchase_date), 'dd MMM yyyy') : '-',
               },
               {
                 header: 'Purchase Price',
-                cell: (asset) => formatCurrency(asset.purchase_price),
+                cell: (asset) => formatCurrency(parseFloat(asset.purchase_price)),
                 textAlign: 'right',
               },
               {
                 header: 'Current Value',
-                cell: (asset) => formatCurrency(asset.current_value),
+                cell: (asset) => formatCurrency(parseFloat(asset.current_value || '0')),
                 textAlign: 'right',
               },
               {
                 header: 'Gain/Loss',
                 cell: (asset) => {
-                  const gain = asset.current_value - asset.purchase_price;
-                  const gainPercent = (gain / asset.purchase_price) * 100;
+                  // Backend returns returns and returns_percentage as numbers
+                  const returns = typeof asset.returns === 'number' ? asset.returns : parseFloat(String(asset.returns || '0'));
+                  const returnsPercent = typeof asset.returns_percentage === 'number' ? asset.returns_percentage : parseFloat(String(asset.returns_percentage || '0'));
                   return (
                     <Stack gap={0} alignItems="flex-end">
                       <Text
                         fontWeight="medium"
-                        color={gain >= 0 ? 'green.600' : 'red.600'}
+                        color={returns >= 0 ? 'green.600' : 'red.600'}
                       >
-                        {formatCurrency(gain)}
+                        {formatCurrency(returns)}
                       </Text>
                       <Badge
-                        colorScheme={gain >= 0 ? 'green' : 'red'}
+                        colorScheme={returns >= 0 ? 'green' : 'red'}
                         fontSize="xs"
                       >
-                        {gain >= 0 ? '+' : ''}
-                        {gainPercent.toFixed(2)}%
+                        {returns >= 0 ? '+' : ''}
+                        {returnsPercent.toFixed(2)}%
                       </Badge>
                     </Stack>
                   );
@@ -197,7 +201,7 @@ const AssetsListPage = () => {
                   <IconButton
                     size="sm"
                     variant="ghost"
-                    onClick={() => navigate(`/assets/${asset.id}`)}
+                    onClick={() => navigate(`/assets/${asset.asset_id}`)}
                   >
                     <LuEye />
                   </IconButton>
@@ -205,97 +209,112 @@ const AssetsListPage = () => {
               },
             ]}
             mobileConfig={{
-              getKey: (asset) => asset.id,
+              getKey: (asset) => asset.asset_id,
               summaryRender: (asset) => {
-                const gain = asset.current_value - asset.purchase_price;
-                const gainPercent = (gain / asset.purchase_price) * 100;
+                // Backend returns returns and returns_percentage as numbers, but prices as strings
+                const returns = typeof asset.returns === 'number' ? asset.returns : parseFloat(String(asset.returns || '0'));
+                const returnsPercent = typeof asset.returns_percentage === 'number' ? asset.returns_percentage : parseFloat(String(asset.returns_percentage || '0'));
+                const currentValue = parseFloat(String(asset.current_value || '0'));
                 return (
                   <Flex justify="space-between" align="center" w="full">
                     <VStack align="start" gap={1} flex={1}>
                       <Text fontWeight="bold" fontSize="md">
-                        {asset.name}
+                        {asset.asset_name}
                       </Text>
                       <HStack gap={2}>
                         <Text fontSize="lg" fontWeight="semibold">
-                          {formatCurrency(asset.current_value)}
+                          {formatCurrency(currentValue)}
                         </Text>
-                        <Badge colorScheme={gain >= 0 ? 'green' : 'red'} fontSize="xs">
-                          {gain >= 0 ? '+' : ''}
-                          {gainPercent.toFixed(2)}%
+                        <Badge colorScheme={returns >= 0 ? 'green' : 'red'} fontSize="xs">
+                          {returns >= 0 ? '+' : ''}
+                          {returnsPercent.toFixed(2)}%
                         </Badge>
                       </HStack>
                     </VStack>
-                    <HStack gap={2}>
-                      <IconButton
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/assets/${asset.id}`);
-                        }}
-                      >
-                        <LuEye />
-                      </IconButton>
-                      <LuChevronDown />
-                    </HStack>
+                    <LuChevronDown />
                   </Flex>
                 );
               },
-              detailsRender: (asset) => (
-                <VStack align="stretch" gap={3}>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Type
-                    </Text>
-                    <Badge colorScheme={getAssetTypeBadgeColor(asset.asset_type)}>
-                      {asset.asset_type.replace('_', ' ')}
-                    </Badge>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Category
-                    </Text>
-                    <Text fontWeight="medium">{asset.category_name}</Text>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Purchase Date
-                    </Text>
-                    <Text fontWeight="medium">
-                      {format(new Date(asset.purchase_date), 'dd MMM yyyy')}
-                    </Text>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Purchase Price
-                    </Text>
-                    <Text fontWeight="medium">{formatCurrency(asset.purchase_price)}</Text>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Gain/Loss
-                    </Text>
-                    <Text
-                      fontWeight="bold"
-                      color={
-                        asset.current_value - asset.purchase_price >= 0
-                          ? 'green.600'
-                          : 'red.600'
-                      }
-                    >
-                      {formatCurrency(asset.current_value - asset.purchase_price)}
-                    </Text>
-                  </Flex>
-                  {asset.description && (
-                    <Flex direction="column" gap={1}>
+              detailsRender: (asset) => {
+                const returns = typeof asset.returns === 'number' ? asset.returns : parseFloat(String(asset.returns || '0'));
+                const purchasePrice = parseFloat(String(asset.purchase_price));
+                return (
+                  <VStack align="stretch" gap={3}>
+                    {asset.category && (
+                      <Flex justify="space-between">
+                        <Text color="text.secondary" fontSize="sm">
+                          Type
+                        </Text>
+                        <Badge colorScheme={getCategoryBadgeColor(asset.category.category_type)}>
+                          {formatCategoryType(asset.category.category_type)}
+                        </Badge>
+                      </Flex>
+                    )}
+                    {asset.category && (
+                      <Flex justify="space-between">
+                        <Text color="text.secondary" fontSize="sm">
+                          Category
+                        </Text>
+                        <Text fontWeight="medium">{asset.category.category_name}</Text>
+                      </Flex>
+                    )}
+                    {asset.subcategory && (
+                      <Flex justify="space-between">
+                        <Text color="text.secondary" fontSize="sm">
+                          Subcategory
+                        </Text>
+                        <Text fontWeight="medium">{asset.subcategory.subcategory_name}</Text>
+                      </Flex>
+                    )}
+                    {asset.purchase_date && (
+                      <Flex justify="space-between">
+                        <Text color="text.secondary" fontSize="sm">
+                          Purchase Date
+                        </Text>
+                        <Text fontWeight="medium">
+                          {format(new Date(asset.purchase_date), 'dd MMM yyyy')}
+                        </Text>
+                      </Flex>
+                    )}
+                    <Flex justify="space-between">
                       <Text color="text.secondary" fontSize="sm">
-                        Description
+                        Purchase Price
                       </Text>
-                      <Text fontSize="sm">{asset.description}</Text>
+                      <Text fontWeight="medium">{formatCurrency(purchasePrice)}</Text>
                     </Flex>
-                  )}
-                </VStack>
-              ),
+                    <Flex justify="space-between">
+                      <Text color="text.secondary" fontSize="sm">
+                        Gain/Loss
+                      </Text>
+                      <Text
+                        fontWeight="bold"
+                        color={returns >= 0 ? 'green.600' : 'red.600'}
+                      >
+                        {formatCurrency(returns)}
+                      </Text>
+                    </Flex>
+                    {asset.description && (
+                      <Flex direction="column" gap={1}>
+                        <Text color="text.secondary" fontSize="sm">
+                          Description
+                        </Text>
+                        <Text fontSize="sm">{asset.description}</Text>
+                      </Flex>
+                    )}
+                    <Flex pt={2} borderTopWidth="1px" mt={2} gap={2}>
+                      <Button
+                        size="sm"
+                        colorScheme="blue"
+                        variant="outline"
+                        flex={1}
+                        onClick={() => navigate(`/assets/${asset.asset_id}`)}
+                      >
+                        View Details
+                      </Button>
+                    </Flex>
+                  </VStack>
+                );
+              },
             }}
           />
         )}

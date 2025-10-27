@@ -3,6 +3,8 @@ import { Box, Flex } from '@chakra-ui/react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
+import MobileDrawer from './MobileDrawer';
+import RouteErrorBoundary from '../common/RouteErrorBoundary';
 import { useNavigationStore } from '../../store/navigationStore';
 
 const AppLayout = () => {
@@ -34,7 +36,9 @@ const AppLayout = () => {
           bg="bg.canvas"
           pb={{ base: '80px', lg: '0' }}
         >
-          <Outlet />
+          <RouteErrorBoundary>
+            <Outlet />
+          </RouteErrorBoundary>
         </Box>
       </Flex>
 
@@ -42,6 +46,9 @@ const AppLayout = () => {
       <Box display={{ base: 'block', lg: 'none' }}>
         <MobileNav />
       </Box>
+
+      {/* Mobile Drawer Menu */}
+      <MobileDrawer />
     </Flex>
   );
 };

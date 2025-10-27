@@ -12,43 +12,27 @@ import {
 } from '@chakra-ui/react';
 import { LuChevronDown } from 'react-icons/lu';
 import { format } from 'date-fns';
-import { recurringDepositsService } from '../../api/services/banking.service';
+import { recurringDepositService } from '../../api/services/banking.service';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import StatCard from '../../components/common/StatCard';
 import ResponsiveTable from '../../components/common/ResponsiveTable';
-
-interface RecurringDeposit {
-  id: number;
-  bank_name: string;
-  account_number: string;
-  rd_number: string;
-  installment_amount: number;
-  interest_rate: number;
-  start_date: string;
-  maturity_date: string;
-  maturity_amount: number;
-  status: string;
-  tenure_months: number;
-  frequency: string;
-  total_installments: number;
-  paid_installments: number;
-}
+import type { RecurringDeposit } from '../../types/domain.types';
 
 const RecurringDepositsPage = () => {
   const { data: response, isLoading } = useQuery({
     queryKey: ['recurringDeposits'],
-    queryFn: () => recurringDepositsService.getAll(),
+    queryFn: () => recurringDepositService.getAll(),
   });
 
   const rds: RecurringDeposit[] = response?.data || [];
 
   const totalInvestment = rds.reduce(
-    (sum, rd) => sum + rd.installment_amount * rd.paid_installments,
+    (sum, rd) => sum + (parseFloat(rd.monthly_installment || '0') * (rd.paid_installments || 0)),
     0
   );
-  const totalMaturityAmount = rds.reduce((sum, rd) => sum + rd.maturity_amount, 0);
-  const activeRDs = rds.filter((rd) => rd.status === 'ACTIVE').length;
+  const totalMaturityAmount = rds.reduce((sum, rd) => sum + parseFloat(rd.maturity_amount || '0'), 0);
+  const activeRDs = rds.filter((rd) => rd.status?.toUpperCase() === 'ACTIVE' || rd.is_active).length;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -81,22 +65,22 @@ const RecurringDepositsPage = () => {
           <StatCard
             label="Total Investment"
             value={formatCurrency(totalInvestment)}
-            colorScheme="blue"
+            color="blue.600"
           />
           <StatCard
             label="Maturity Amount"
             value={formatCurrency(totalMaturityAmount)}
-            colorScheme="green"
+            color="green.600"
           />
           <StatCard
             label="Active RDs"
             value={activeRDs.toString()}
-            colorScheme="purple"
+            color="purple.600"
           />
           <StatCard
             label="Total RDs"
             value={rds.length.toString()}
-            colorScheme="teal"
+            color="teal.600"
           />
         </Grid>
 
@@ -126,17 +110,17 @@ const RecurringDepositsPage = () => {
               },
               {
                 header: 'Installment',
-                cell: (rd) => formatCurrency(rd.installment_amount),
+                cell: (rd) => formatCurrency(parseFloat(rd.monthly_installment)),
                 textAlign: 'right',
               },
               {
                 header: 'Interest Rate',
-                cell: (rd) => `${rd.interest_rate}%`,
+                cell: (rd) => `${parseFloat(rd.interest_rate)}%`,
                 textAlign: 'right',
               },
               {
-                header: 'Frequency',
-                cell: (rd) => <Badge>{rd.frequency}</Badge>,
+                header: 'Installment Day',
+                cell: (rd) => <Badge>{rd.installment_day ? `Day ${rd.installment_day}` : '-'}</Badge>,
               },
               {
                 header: 'Tenure',
@@ -153,11 +137,13 @@ const RecurringDepositsPage = () => {
               {
                 header: 'Progress',
                 cell: (rd) => {
-                  const progress = (rd.paid_installments / rd.total_installments) * 100;
+                  const paidInstallments = rd.paid_installments || 0;
+                  const totalInstallments = rd.total_installments || rd.tenure_months || 1;
+                  const progress = (paidInstallments / totalInstallments) * 100;
                   return (
                     <HStack gap={2}>
                       <Text fontSize="sm">
-                        {rd.paid_installments}/{rd.total_installments}
+                        {paidInstallments}/{totalInstallments}
                       </Text>
                       <Badge
                         colorScheme={
@@ -174,7 +160,7 @@ const RecurringDepositsPage = () => {
                 header: 'Maturity Amount',
                 cell: (rd) => (
                   <Text fontWeight="medium" color="green.600">
-                    {formatCurrency(rd.maturity_amount)}
+                    {formatCurrency(parseFloat(rd.maturity_amount || '0'))}
                   </Text>
                 ),
                 textAlign: 'right',
@@ -187,9 +173,12 @@ const RecurringDepositsPage = () => {
               },
             ]}
             mobileConfig={{
-              getKey: (rd) => rd.id,
+              getKey: (rd) => rd.rd_id,
               summaryRender: (rd) => {
-                const progress = (rd.paid_installments / rd.total_installments) * 100;
+                const paidInstallments = rd.paid_installments || 0;
+                const totalInstallments = rd.total_installments || rd.tenure_months || 1;
+                const progress = (paidInstallments / totalInstallments) * 100;
+                const maturityAmount = parseFloat(rd.maturity_amount || '0');
                 return (
                   <Flex justify="space-between" align="center" w="full">
                     <VStack align="start" gap={1} flex={1}>
@@ -201,73 +190,86 @@ const RecurringDepositsPage = () => {
                       </Text>
                       <HStack gap={2}>
                         <Text fontSize="lg" fontWeight="semibold" color="green.600">
-                          {formatCurrency(rd.maturity_amount)}
+                          {formatCurrency(maturityAmount)}
                         </Text>
-                        <Badge colorScheme={getStatusColor(rd.status)}>{rd.status}</Badge>
+                        <Badge colorScheme={getStatusColor(rd.status || 'ACTIVE')}>{rd.status || 'ACTIVE'}</Badge>
                       </HStack>
                       <Badge
                         colorScheme={
                           progress === 100 ? 'green' : progress > 50 ? 'blue' : 'orange'
                         }
                       >
-                        {rd.paid_installments}/{rd.total_installments} ({progress.toFixed(0)}
-                        %)
+                        {paidInstallments}/{totalInstallments} ({progress.toFixed(0)}%)
                       </Badge>
                     </VStack>
                     <LuChevronDown />
                   </Flex>
                 );
               },
-              detailsRender: (rd) => (
-                <VStack align="stretch" gap={3}>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Account Number
-                    </Text>
-                    <Text fontWeight="medium">{rd.account_number}</Text>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Installment Amount
-                    </Text>
-                    <Text fontWeight="medium">{formatCurrency(rd.installment_amount)}</Text>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Frequency
-                    </Text>
-                    <Badge>{rd.frequency}</Badge>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Interest Rate
-                    </Text>
-                    <Text fontWeight="medium">{rd.interest_rate}%</Text>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Tenure
-                    </Text>
-                    <Text fontWeight="medium">{rd.tenure_months} months</Text>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Start Date
-                    </Text>
-                    <Text fontWeight="medium">
-                      {format(new Date(rd.start_date), 'dd MMM yyyy')}
-                    </Text>
-                  </Flex>
-                  <Flex justify="space-between">
-                    <Text color="text.secondary" fontSize="sm">
-                      Maturity Date
-                    </Text>
-                    <Text fontWeight="medium">
-                      {format(new Date(rd.maturity_date), 'dd MMM yyyy')}
-                    </Text>
-                  </Flex>
-                </VStack>
-              ),
+              detailsRender: (rd) => {
+                const monthlyInstallment = parseFloat(rd.monthly_installment);
+                const interestRate = parseFloat(rd.interest_rate);
+                return (
+                  <VStack align="stretch" gap={3}>
+                    <Flex justify="space-between">
+                      <Text color="text.secondary" fontSize="sm">
+                        Account Number
+                      </Text>
+                      <Text fontWeight="medium">{rd.account_number}</Text>
+                    </Flex>
+                    <Flex justify="space-between">
+                      <Text color="text.secondary" fontSize="sm">
+                        Monthly Installment
+                      </Text>
+                      <Text fontWeight="medium">{formatCurrency(monthlyInstallment)}</Text>
+                    </Flex>
+                    <Flex justify="space-between">
+                      <Text color="text.secondary" fontSize="sm">
+                        Installment Day
+                      </Text>
+                      <Badge>{rd.installment_day ? `Day ${rd.installment_day}` : '-'}</Badge>
+                    </Flex>
+                    {rd.auto_debit !== undefined && (
+                      <Flex justify="space-between">
+                        <Text color="text.secondary" fontSize="sm">
+                          Auto Debit
+                        </Text>
+                        <Badge colorScheme={rd.auto_debit ? 'green' : 'gray'}>
+                          {rd.auto_debit ? 'Enabled' : 'Disabled'}
+                        </Badge>
+                      </Flex>
+                    )}
+                    <Flex justify="space-between">
+                      <Text color="text.secondary" fontSize="sm">
+                        Interest Rate
+                      </Text>
+                      <Text fontWeight="medium">{interestRate}%</Text>
+                    </Flex>
+                    <Flex justify="space-between">
+                      <Text color="text.secondary" fontSize="sm">
+                        Tenure
+                      </Text>
+                      <Text fontWeight="medium">{rd.tenure_months} months</Text>
+                    </Flex>
+                    <Flex justify="space-between">
+                      <Text color="text.secondary" fontSize="sm">
+                        Start Date
+                      </Text>
+                      <Text fontWeight="medium">
+                        {format(new Date(rd.start_date), 'dd MMM yyyy')}
+                      </Text>
+                    </Flex>
+                    <Flex justify="space-between">
+                      <Text color="text.secondary" fontSize="sm">
+                        Maturity Date
+                      </Text>
+                      <Text fontWeight="medium">
+                        {format(new Date(rd.maturity_date), 'dd MMM yyyy')}
+                      </Text>
+                    </Flex>
+                  </VStack>
+                );
+              },
             }}
           />
         )}

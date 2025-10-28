@@ -1,7 +1,7 @@
 import { Response } from 'express';
-import { eq, and, sql, sum } from 'drizzle-orm';
+import { eq, and, sql, sum, desc } from 'drizzle-orm';
 import { db } from '../config/database';
-import { userSecurityHoldings, vSecurityHoldings } from '../db/schema';
+import { userSecurityHoldings, vSecurityHoldings, securityTransactions } from '../db/schema';
 import { AuthRequest } from '../types';
 import { ApiError } from '../middleware/errorHandler';
 import { sendSuccess, sendList } from '../utils/response-formatter';
@@ -195,6 +195,52 @@ export async function deleteHolding(req: AuthRequest, res: Response) {
       .where(eq(userSecurityHoldings.holding_id, holdingId));
 
     return sendSuccess(res, null, 'Holding deleted successfully');
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * Get all transactions for a specific holding
+ */
+export async function getHoldingTransactions(req: AuthRequest, res: Response) {
+  try {
+    const holdingId = parseInt(req.params.id);
+    const userId = req.user!.userId;
+
+    if (isNaN(holdingId)) {
+      throw new ApiError(400, 'Invalid holding ID');
+    }
+
+    // First, verify the holding exists and belongs to the user
+    const holding = await db
+      .select()
+      .from(userSecurityHoldings)
+      .where(eq(userSecurityHoldings.holding_id, holdingId))
+      .limit(1);
+
+    if (holding.length === 0) {
+      throw new ApiError(404, 'Holding not found');
+    }
+
+    if (holding[0].user_id !== userId) {
+      throw new ApiError(403, 'Access denied to this holding');
+    }
+
+    // Get all transactions for this holding (matching user, account, and security)
+    const transactions = await db
+      .select()
+      .from(securityTransactions)
+      .where(
+        and(
+          eq(securityTransactions.user_id, holding[0].user_id),
+          eq(securityTransactions.account_id, holding[0].account_id),
+          eq(securityTransactions.security_id, holding[0].security_id)
+        )
+      )
+      .orderBy(desc(securityTransactions.transaction_date));
+
+    return sendList(res, transactions);
   } catch (error) {
     throw error;
   }

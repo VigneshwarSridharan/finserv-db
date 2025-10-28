@@ -154,7 +154,8 @@ Updated the navigation system to include all pages from the features folder with
 2. ✅ `frontend/src/components/layout/MobileDrawer.tsx` - NEW FILE for mobile drawer
 3. ✅ `frontend/src/components/layout/Header.tsx` - Added hamburger button
 4. ✅ `frontend/src/components/layout/MobileNav.tsx` - Added Portfolio item
-5. ✅ `frontend/src/components/layout/AppLayout.tsx` - Integrated MobileDrawer
+5. ✅ `frontend/src/components/layout/AppLayout.tsx` - Integrated MobileDrawer and Breadcrumbs
+6. ✅ `frontend/src/components/common/Breadcrumbs.tsx` - NEW FILE for breadcrumb navigation
 
 ## Dependencies
 - All navigation uses existing Chakra UI components
@@ -166,10 +167,32 @@ Updated the navigation system to include all pages from the features folder with
 - Uses compound component pattern: `Collapsible.Root` and `Collapsible.Content`
 - Fully compatible with Chakra UI v3
 
+## 6. Breadcrumb Navigation System
+**Location:** `frontend/src/components/common/Breadcrumbs.tsx` (NEW FILE)
+
+**Features:**
+- **Dynamic Generation**: Automatically generates breadcrumbs from the URL path
+- **Smart Labels**: Human-readable labels for all route segments
+- **Home Icon**: Always starts with a home icon linking to the dashboard
+- **Clickable Path**: Each breadcrumb item (except current) is clickable for quick navigation
+- **Current Page Highlight**: Current page shown in bold (not clickable)
+- **Responsive**: Compact design that works on mobile and desktop
+- **Integrated**: Added to AppLayout above all page content
+
+**Example Breadcrumb Trails:**
+```
+🏠 > Securities > Brokers
+🏠 > Banking > Fixed Deposits
+🏠 > Assets > Categories
+🏠 > Portfolio > Goals
+```
+
 ## Next Steps (Optional Enhancements)
-1. Add breadcrumbs for better navigation context
+1. ~~Add breadcrumbs for better navigation context~~ ✅ COMPLETED
 2. Add search functionality in drawer
 3. Add keyboard shortcuts for power users
 4. Add animation preferences for accessibility
 5. Add analytics tracking for navigation usage
+6. Add icons to breadcrumb items
+7. Add dropdown menus in breadcrumbs for sibling pages
 

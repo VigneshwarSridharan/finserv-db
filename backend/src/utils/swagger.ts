@@ -1653,6 +1653,59 @@ A comprehensive RESTful API for managing investment portfolios including securit
         }
       }
     },
+    '/holdings/securities/{id}/transactions': {
+      get: {
+        tags: ['Security Holdings'],
+        summary: 'Get transactions for a holding',
+        description: 'Get all transactions associated with a specific security holding (by user, account, and security)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, description: 'Holding ID' }
+        ],
+        responses: { 
+          200: { 
+            description: 'List of transactions for the holding',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          transaction_id: { type: 'integer' },
+                          user_id: { type: 'integer' },
+                          account_id: { type: 'integer' },
+                          security_id: { type: 'integer' },
+                          transaction_type: { type: 'string', enum: ['buy', 'sell', 'bonus', 'split', 'dividend'] },
+                          transaction_date: { type: 'string', format: 'date' },
+                          quantity: { type: 'string' },
+                          price: { type: 'string' },
+                          total_amount: { type: 'string' },
+                          brokerage: { type: 'string' },
+                          taxes: { type: 'string' },
+                          other_charges: { type: 'string' },
+                          net_amount: { type: 'string' },
+                          notes: { type: 'string' },
+                          created_at: { type: 'string', format: 'date-time' }
+                        }
+                      }
+                    },
+                    count: { type: 'integer' }
+                  }
+                }
+              }
+            }
+          },
+          400: { description: 'Invalid holding ID' },
+          403: { description: 'Access denied to this holding' },
+          404: { description: 'Holding not found' }
+        }
+      }
+    },
 
     // ==================== SECURITY TRANSACTIONS ENDPOINTS ====================
     '/transactions/securities': {

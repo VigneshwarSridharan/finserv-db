@@ -33,7 +33,10 @@ WHERE u.is_active = TRUE;
 -- Securities holdings detailed view
 CREATE VIEW v_security_holdings AS
 SELECT 
+    ush.holding_id,
     ush.user_id,
+    ush.account_id,
+    ush.security_id,
     u.first_name || ' ' || u.last_name as user_name,
     b.broker_name,
     uba.account_number,

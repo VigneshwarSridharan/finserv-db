@@ -52,6 +52,7 @@ const menuItems: MenuItem[] = [
     subItems: [
       { label: 'Overview', path: '/securities', icon: FiBarChart2 },
       { label: 'Brokers', path: '/securities/brokers', icon: FiBriefcase },
+      { label: 'Accounts', path: '/securities/accounts', icon: FiCreditCard },
       { label: 'Holdings', path: '/securities/holdings', icon: FiShoppingCart },
       { label: 'Transactions', path: '/securities/transactions', icon: FiRepeat },
     ],

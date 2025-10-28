@@ -5,6 +5,10 @@ import type {
   CreateAssetRequest,
   AssetCategory,
   CreateAssetCategoryRequest,
+  RealEstateDetail,
+  CreateRealEstateDetailRequest,
+  GoldDetail,
+  CreateGoldDetailRequest,
 } from '../../types/domain.types';
 
 // Asset Categories
@@ -53,21 +57,29 @@ export const assetService = {
   },
 
   // Real Estate
-  getRealEstateDetails: async (assetId: number | string): Promise<ApiResponse<any>> => {
-    return api.get<any>(`/assets/${assetId}/real-estate`);
+  getRealEstateDetails: async (assetId: number | string): Promise<ApiResponse<RealEstateDetail>> => {
+    return api.get<RealEstateDetail>(`/assets/${assetId}/real-estate`);
   },
 
-  updateRealEstateDetails: async (assetId: number | string, data: any): Promise<ApiResponse<any>> => {
-    return api.put<any>(`/assets/${assetId}/real-estate`, data);
+  addRealEstateDetails: async (assetId: number | string, data: CreateRealEstateDetailRequest): Promise<ApiResponse<RealEstateDetail>> => {
+    return api.post<RealEstateDetail>(`/assets/${assetId}/real-estate`, data);
+  },
+
+  updateRealEstateDetails: async (assetId: number | string, data: Partial<CreateRealEstateDetailRequest>): Promise<ApiResponse<RealEstateDetail>> => {
+    return api.put<RealEstateDetail>(`/assets/${assetId}/real-estate`, data);
   },
 
   // Gold
-  getGoldDetails: async (assetId: number | string): Promise<ApiResponse<any>> => {
-    return api.get<any>(`/assets/${assetId}/gold`);
+  getGoldDetails: async (assetId: number | string): Promise<ApiResponse<GoldDetail>> => {
+    return api.get<GoldDetail>(`/assets/${assetId}/gold`);
   },
 
-  updateGoldDetails: async (assetId: number | string, data: any): Promise<ApiResponse<any>> => {
-    return api.put<any>(`/assets/${assetId}/gold`, data);
+  addGoldDetails: async (assetId: number | string, data: CreateGoldDetailRequest): Promise<ApiResponse<GoldDetail>> => {
+    return api.post<GoldDetail>(`/assets/${assetId}/gold`, data);
+  },
+
+  updateGoldDetails: async (assetId: number | string, data: Partial<CreateGoldDetailRequest>): Promise<ApiResponse<GoldDetail>> => {
+    return api.put<GoldDetail>(`/assets/${assetId}/gold`, data);
   },
 
   // Valuations

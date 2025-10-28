@@ -17,10 +17,14 @@ import EmptyState from '../../components/common/EmptyState';
 import StatCard from '../../components/common/StatCard';
 import SearchBar from '../../components/common/SearchBar';
 import ResponsiveTable from '../../components/common/ResponsiveTable';
+import HoldingTransactionsList from './HoldingTransactionsList';
 import { useState } from 'react';
 
 interface SecurityHolding {
+  holding_id: number;
   user_id: number;
+  account_id: number;
+  security_id: number;
   user_name: string;
   broker_name: string;
   account_number: string;
@@ -293,6 +297,18 @@ const HoldingsPage = () => {
                   </VStack>
                 );
               },
+            }}
+            expandableConfig={{
+              getExpandKey: (holding) => holding.holding_id,
+              expandedContent: (holding) => (
+                <HoldingTransactionsList
+                  holdingId={holding.holding_id}
+                  accountId={holding.account_id}
+                  securityId={holding.security_id}
+                  securityName={holding.security_name}
+                  symbol={holding.symbol}
+                />
+              ),
             }}
           />
         )}

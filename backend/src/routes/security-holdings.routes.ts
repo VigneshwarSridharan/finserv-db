@@ -4,7 +4,8 @@ import {
   getHoldingById,
   getHoldingsSummary,
   updateHoldingCurrentPrice,
-  deleteHolding
+  deleteHolding,
+  getHoldingTransactions
 } from '../controllers/security-holdings.controller';
 import { authenticate } from '../middleware/auth';
 
@@ -33,6 +34,13 @@ router.get('/summary', getHoldingsSummary);
  * @access  Private
  */
 router.get('/:id', getHoldingById);
+
+/**
+ * @route   GET /holdings/securities/:id/transactions
+ * @desc    Get all transactions for a specific holding
+ * @access  Private
+ */
+router.get('/:id/transactions', getHoldingTransactions);
 
 /**
  * @route   PUT /holdings/securities/:id/current-price

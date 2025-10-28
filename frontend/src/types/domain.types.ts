@@ -113,22 +113,29 @@ export interface BrokerAccount {
   user_id: number;
   broker_id: number;
   account_number: string;
-  account_type?: string;
+  account_type: 'demat' | 'trading' | 'demat_trading';
+  dp_id?: string;
   is_active: boolean;
   opened_date?: string;
   created_at: string;
+  updated_at?: string;
+  broker?: Broker;
 }
 
 export interface CreateBrokerAccountRequest {
   broker_id: number;
   account_number: string;
-  account_type?: string;
+  account_type: 'demat' | 'trading' | 'demat_trading';
+  dp_id?: string;
   opened_date?: string;
 }
 
 // Security Holding Types
 export interface SecurityHolding {
+  holding_id: number;
   user_id: number;
+  account_id: number;
+  security_id: number;
   user_name: string;
   broker_name: string;
   account_number: string;
@@ -396,6 +403,16 @@ export interface AssetCategory {
   is_active: boolean;
   created_at: string;
   updated_at?: string;
+  subcategories?: AssetSubcategory[];
+}
+
+export interface AssetSubcategory {
+  subcategory_id: number;
+  category_id: number;
+  subcategory_name: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
 }
 
 export interface CreateAssetCategoryRequest {
@@ -565,6 +582,80 @@ export interface PieChartData {
   name: string;
   value: number;
   color?: string;
+}
+
+// Real Estate Detail Types
+export interface RealEstateDetail {
+  property_id: number;
+  asset_id: number;
+  property_type: 'residential' | 'commercial' | 'industrial' | 'agricultural' | 'land';
+  property_address: string;
+  city: string;
+  state: string;
+  pincode?: string;
+  area_sqft?: string;
+  built_up_area_sqft?: string;
+  year_built?: number;
+  floors?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  parking_spaces?: number;
+  registration_number?: string;
+  registration_date?: string;
+  property_tax_number?: string;
+  maintenance_charges?: string;
+  rental_income?: string;
+  rental_yield?: string;
+  occupancy_status?: 'self_occupied' | 'rented' | 'vacant' | 'under_construction';
+}
+
+export interface CreateRealEstateDetailRequest {
+  property_type: 'residential' | 'commercial' | 'industrial' | 'agricultural' | 'land';
+  property_address: string;
+  city: string;
+  state: string;
+  pincode?: string;
+  area_sqft?: number;
+  built_up_area_sqft?: number;
+  year_built?: number;
+  floors?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  parking_spaces?: number;
+  registration_number?: string;
+  registration_date?: string;
+  property_tax_number?: string;
+  maintenance_charges?: number;
+  rental_income?: number;
+  rental_yield?: number;
+  occupancy_status?: 'self_occupied' | 'rented' | 'vacant' | 'under_construction';
+}
+
+// Gold Detail Types
+export interface GoldDetail {
+  gold_id: number;
+  asset_id: number;
+  gold_type: 'jewelry' | 'coins' | 'bars' | 'etf' | 'mutual_fund';
+  purity: '18K' | '22K' | '24K' | '999' | '995' | '916';
+  weight_grams: string;
+  making_charges?: string;
+  wastage_charges?: string;
+  hallmark_certificate?: string;
+  jeweler_name?: string;
+  purchase_bill_number?: string;
+  current_gold_rate_per_gram?: string;
+}
+
+export interface CreateGoldDetailRequest {
+  gold_type: 'jewelry' | 'coins' | 'bars' | 'etf' | 'mutual_fund';
+  purity: '18K' | '22K' | '24K' | '999' | '995' | '916';
+  weight_grams: number;
+  making_charges?: number;
+  wastage_charges?: number;
+  hallmark_certificate?: string;
+  jeweler_name?: string;
+  purchase_bill_number?: string;
+  current_gold_rate_per_gram?: number;
 }
 
 

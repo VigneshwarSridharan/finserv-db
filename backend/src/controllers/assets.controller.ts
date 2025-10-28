@@ -15,12 +15,12 @@ export async function listAssets(req: AuthRequest, res: Response) {
 
   const { offset, limit: pageSize, page: currentPage } = parsePagination({ page: Number(page), limit: Number(limit) });
 
-  // Build filters
+  // Build filters - only add filter if parameter is provided
   const filters = combineFilters([
     eq(userAssets.user_id, userId),
-    buildFilterCondition(userAssets.category_id, category_id ? Number(category_id) : undefined),
-    buildFilterCondition(userAssets.subcategory_id, subcategory_id ? Number(subcategory_id) : undefined),
-    buildFilterCondition(userAssets.is_active, is_active === 'true'),
+    category_id ? buildFilterCondition(userAssets.category_id, Number(category_id)) : undefined,
+    subcategory_id ? buildFilterCondition(userAssets.subcategory_id, Number(subcategory_id)) : undefined,
+    is_active !== undefined ? buildFilterCondition(userAssets.is_active, is_active === 'true') : undefined,
     buildDateRangeFilter(userAssets.purchase_date, start_date as string, end_date as string)
   ]);
 

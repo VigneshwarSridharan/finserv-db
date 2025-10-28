@@ -10,6 +10,7 @@ const RegisterPage = lazy(() => import('../features/auth/RegisterPage'));
 const DashboardPage = lazy(() => import('../features/dashboard/DashboardPage'));
 const SecuritiesPage = lazy(() => import('../features/securities/SecuritiesPage'));
 const BrokersPage = lazy(() => import('../features/securities/BrokersPage'));
+const BrokerAccountsPage = lazy(() => import('../features/securities/BrokerAccountsPage'));
 const HoldingsPage = lazy(() => import('../features/securities/HoldingsPage'));
 const TransactionsPage = lazy(() => import('../features/securities/TransactionsPage'));
 const BankingPage = lazy(() => import('../features/banking/BankingPage'));
@@ -19,6 +20,8 @@ const RecurringDepositsPage = lazy(() => import('../features/banking/RecurringDe
 const AssetsPage = lazy(() => import('../features/assets/AssetsPage'));
 const AssetsListPage = lazy(() => import('../features/assets/AssetsListPage'));
 const CategoriesPage = lazy(() => import('../features/assets/CategoriesPage'));
+const RealEstatePage = lazy(() => import('../features/assets/RealEstatePage'));
+const GoldPage = lazy(() => import('../features/assets/GoldPage'));
 const PortfolioPage = lazy(() => import('../features/portfolio/PortfolioPage'));
 const GoalsPage = lazy(() => import('../features/portfolio/GoalsPage'));
 const AlertsPage = lazy(() => import('../features/portfolio/AlertsPage'));
@@ -58,6 +61,8 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AppRoutes = () => {
+  const { isAuthenticated } = useAuthStore();
+  
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
@@ -85,7 +90,7 @@ const AppRoutes = () => {
 
         {/* Protected routes */}
         <Route
-          path="/*"
+          path="/"
           element={
             <PrivateRoute>
               <AppLayout />
@@ -96,6 +101,7 @@ const AppRoutes = () => {
           <Route path="dashboard" element={<RouteElement><DashboardPage /></RouteElement>} />
           <Route path="securities" element={<RouteElement><SecuritiesPage /></RouteElement>} />
           <Route path="securities/brokers" element={<RouteElement><BrokersPage /></RouteElement>} />
+          <Route path="securities/accounts" element={<RouteElement><BrokerAccountsPage /></RouteElement>} />
           <Route path="securities/holdings" element={<RouteElement><HoldingsPage /></RouteElement>} />
           <Route path="securities/transactions" element={<RouteElement><TransactionsPage /></RouteElement>} />
           <Route path="banking" element={<RouteElement><BankingPage /></RouteElement>} />
@@ -105,16 +111,21 @@ const AppRoutes = () => {
           <Route path="assets" element={<RouteElement><AssetsPage /></RouteElement>} />
           <Route path="assets/list" element={<RouteElement><AssetsListPage /></RouteElement>} />
           <Route path="assets/categories" element={<RouteElement><CategoriesPage /></RouteElement>} />
+          <Route path="assets/real-estate" element={<RouteElement><RealEstatePage /></RouteElement>} />
+          <Route path="assets/gold" element={<RouteElement><GoldPage /></RouteElement>} />
           <Route path="portfolio" element={<RouteElement><PortfolioPage /></RouteElement>} />
           <Route path="portfolio/goals" element={<RouteElement><GoalsPage /></RouteElement>} />
           <Route path="portfolio/alerts" element={<RouteElement><AlertsPage /></RouteElement>} />
           <Route path="portfolio/watchlist" element={<RouteElement><WatchlistPage /></RouteElement>} />
           <Route path="profile" element={<RouteElement><ProfilePage /></RouteElement>} />
           <Route path="settings" element={<RouteElement><ProfilePage /></RouteElement>} />
+          
+          {/* 404 for authenticated users */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
 
-        {/* 404 */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* 404 for unauthenticated users */}
+        <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
       </Routes>
     </Suspense>
   );

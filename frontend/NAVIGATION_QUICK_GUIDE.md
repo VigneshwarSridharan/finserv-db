@@ -2,6 +2,19 @@
 
 ## 🎯 What's New
 
+### Breadcrumb Navigation (NEW! ✨)
+```
+┌─────────────────────────────────────────┐
+│ ☰ Portfolio Manager          👤 ⚙️     │  ← Header
+├─────────────────────────────────────────┤
+│ 🏠 > Securities > Brokers               │  ← Breadcrumbs (clickable!)
+├─────────────────────────────────────────┤
+│                                         │
+│         Page Content Here               │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
 ### Desktop Experience
 ```
 ┌─────────────────────────────────────────┐
@@ -65,17 +78,29 @@
 
 ## 🚀 Key Features
 
-### 1. **Smart Auto-Expand**
+### 1. **Breadcrumb Navigation** ✨ NEW!
+Always know where you are and navigate back easily!
+- **Home Icon**: Click 🏠 to return to dashboard
+- **Clickable Path**: Click any breadcrumb to jump back
+- **Current Page**: Shown in bold (last item)
+- **Dynamic**: Updates automatically as you navigate
+
+**Examples:**
+- Dashboard: `🏠 Dashboard`
+- Brokers: `🏠 > Securities > Brokers`
+- Fixed Deposits: `🏠 > Banking > Fixed Deposits`
+
+### 2. **Smart Auto-Expand**
 When you navigate to a sub-page (e.g., `/securities/brokers`), the Securities section automatically expands to show you where you are.
 
-### 2. **Collapsible Sections**
+### 3. **Collapsible Sections**
 Click on any main section (Securities, Banking, Assets, Portfolio) to expand/collapse its sub-items.
 
-### 3. **Dual Mobile Navigation**
+### 4. **Dual Mobile Navigation**
 - **Quick Access**: Bottom nav bar for main sections
 - **Full Access**: Hamburger menu for all pages
 
-### 4. **Visual Indicators**
+### 5. **Visual Indicators**
 - ▼ = Expanded section
 - ▶ = Collapsed section
 - Highlighted = Active page
@@ -128,11 +153,13 @@ Click on any main section (Securities, Banking, Assets, Portfolio) to expand/col
 
 ## ✨ Tips
 
-1. **Keyboard Navigation**: Use Tab to navigate through menu items
-2. **Persistent State**: Section expand/collapse state is remembered during your session
-3. **Active Highlights**: Current page is always highlighted
-4. **Responsive**: Layout adapts automatically to your screen size
-5. **Touch-Friendly**: All buttons are sized for easy mobile interaction
+1. **Quick Back Navigation**: Use breadcrumbs to quickly jump back to parent sections
+2. **Keyboard Navigation**: Use Tab to navigate through menu items
+3. **Breadcrumb Navigation**: Click any breadcrumb item to jump to that page
+4. **Persistent State**: Section expand/collapse state is remembered during your session
+5. **Active Highlights**: Current page is always highlighted in sidebar and breadcrumbs
+6. **Responsive**: Layout adapts automatically to your screen size
+7. **Touch-Friendly**: All buttons are sized for easy mobile interaction
 
 ## 🔧 Customization
 
@@ -141,7 +168,9 @@ Want to modify the navigation? Edit these files:
 - `frontend/src/components/layout/MobileDrawer.tsx` - Mobile drawer
 - `frontend/src/components/layout/MobileNav.tsx` - Bottom navigation
 - `frontend/src/components/layout/Header.tsx` - Top header
+- `frontend/src/components/common/Breadcrumbs.tsx` - Breadcrumb navigation
 
-The menu structure is defined in the `menuItems` array in both `Sidebar.tsx` and `MobileDrawer.tsx`.
+**Menu Structure**: Defined in the `menuItems` array in both `Sidebar.tsx` and `MobileDrawer.tsx`
+**Breadcrumb Labels**: Defined in the `routeLabels` object in `Breadcrumbs.tsx`
 
 

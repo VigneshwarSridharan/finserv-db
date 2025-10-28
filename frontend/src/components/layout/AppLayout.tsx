@@ -4,6 +4,7 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
 import MobileDrawer from './MobileDrawer';
+import Breadcrumbs from '../common/Breadcrumbs';
 import RouteErrorBoundary from '../common/RouteErrorBoundary';
 import { useNavigationStore } from '../../store/navigationStore';
 
@@ -36,6 +37,10 @@ const AppLayout = () => {
           bg="bg.canvas"
           pb={{ base: '80px', lg: '0' }}
         >
+          {/* Breadcrumbs */}
+          <Breadcrumbs />
+          
+          {/* Page Content */}
           <RouteErrorBoundary>
             <Outlet />
           </RouteErrorBoundary>

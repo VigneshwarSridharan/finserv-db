@@ -21,7 +21,10 @@ export const vPortfolioOverview = pgView('v_portfolio_overview').as((qb) =>
 // Securities holdings detailed view
 export const vSecurityHoldings = pgView('v_security_holdings').as((qb) => 
   qb.select({
+    holding_id: sql<number>`holding_id`.as('holding_id'),
     user_id: sql<number>`user_id`.as('user_id'),
+    account_id: sql<number>`account_id`.as('account_id'),
+    security_id: sql<number>`security_id`.as('security_id'),
     user_name: sql<string>`user_name`.as('user_name'),
     broker_name: sql<string>`broker_name`.as('broker_name'),
     account_number: sql<string>`account_number`.as('account_number'),

@@ -113,6 +113,10 @@ export const holdingsService = {
   getById: async (id: number | string): Promise<ApiResponse<SecurityHolding>> => {
     return api.get<SecurityHolding>(`/holdings/securities/${id}`);
   },
+
+  getTransactions: async (holdingId: number | string): Promise<ApiResponse<SecurityTransaction[]>> => {
+    return api.get<SecurityTransaction[]>(`/holdings/securities/${holdingId}/transactions`);
+  },
 };
 
 // Transactions

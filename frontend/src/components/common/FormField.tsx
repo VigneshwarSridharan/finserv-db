@@ -1,6 +1,8 @@
 import { Field as ChakraField } from '../ui/field';
-import { Input, Textarea, Select as ChakraSelect } from '@chakra-ui/react';
+import { Input, Textarea } from '@chakra-ui/react';
 import { forwardRef } from 'react';
+import Select from './Select';
+import type { SelectOption, SelectProps } from './Select';
 
 interface BaseFieldProps {
   label: string;
@@ -22,9 +24,13 @@ interface TextareaFieldProps extends BaseFieldProps {
 
 interface SelectFieldProps extends BaseFieldProps {
   placeholder?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  children: React.ReactNode;
+  value?: string | number;
+  onChange?: (value: string | number | null) => void;
+  options: SelectOption[];
+  isDisabled?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  isClearable?: boolean;
+  isMulti?: boolean;
 }
 
 export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
@@ -63,8 +69,16 @@ export const TextareaField = forwardRef<HTMLTextAreaElement, TextareaFieldProps>
 
 TextareaField.displayName = 'TextareaField';
 
-export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
-  ({ label, error, required, helperText, children, ...props }, ref) => {
+export const SelectField = forwardRef<any, SelectFieldProps>(
+  ({ label, error, required, helperText, options, value, onChange, size = 'md', isDisabled, isClearable, isMulti, placeholder }, ref) => {
+    // Convert value to option format
+    const selectedOption = options.find(opt => opt.value === value) || null;
+
+    // Handle onChange by extracting the value
+    const handleChange = (option: SelectOption | null) => {
+      onChange?.(option ? option.value : null);
+    };
+
     return (
       <ChakraField
         label={label}
@@ -73,18 +87,26 @@ export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(
         errorText={error}
         helperText={helperText}
       >
-        <ChakraSelect.Root {...props}>
-          <ChakraSelect.Trigger ref={ref}>
-            <ChakraSelect.ValueText placeholder={props.placeholder} />
-          </ChakraSelect.Trigger>
-          <ChakraSelect.Content>
-            {children}
-          </ChakraSelect.Content>
-        </ChakraSelect.Root>
+        <Select
+          ref={ref}
+          options={options}
+          value={selectedOption}
+          onChange={handleChange as any}
+          placeholder={placeholder}
+          size={size}
+          isDisabled={isDisabled}
+          isInvalid={!!error}
+          isRequired={required}
+          isClearable={isClearable}
+          isMulti={isMulti}
+        />
       </ChakraField>
     );
   }
 );
 
 SelectField.displayName = 'SelectField';
+
+// Export Select component for direct use without Field wrapper
+export { Select, type SelectOption, type SelectProps };
 

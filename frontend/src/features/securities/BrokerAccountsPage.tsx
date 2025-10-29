@@ -185,6 +185,18 @@ const BrokerAccountsPage = () => {
   const accounts: BrokerAccount[] = accountsResponse?.data || [];
   const brokers = brokersResponse?.data || [];
 
+  // Options for SelectField
+  const brokerOptions = brokers.map((broker: any) => ({
+    value: broker.broker_id,
+    label: broker.broker_name,
+  }));
+
+  const accountTypeOptions = [
+    { value: 'demat', label: 'Demat' },
+    { value: 'trading', label: 'Trading' },
+    { value: 'demat_trading', label: 'Demat + Trading' },
+  ];
+
   const filteredAccounts = accounts.filter((account) => {
     const searchLower = searchTerm.toLowerCase();
     const brokerName = account.broker?.broker_name?.toLowerCase() || '';
@@ -467,16 +479,10 @@ const BrokerAccountsPage = () => {
                         error={errors.broker_id?.message}
                         required
                         placeholder="Select broker"
-                        value={field.value?.toString() || ''}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      >
-                        <option value="">Select broker</option>
-                        {brokers.map((broker) => (
-                          <option key={broker.broker_id} value={broker.broker_id}>
-                            {broker.broker_name}
-                          </option>
-                        ))}
-                      </SelectField>
+                        options={brokerOptions}
+                        value={field.value}
+                        onChange={(value) => field.onChange(value)}
+                      />
                     )}
                   />
 
@@ -487,16 +493,20 @@ const BrokerAccountsPage = () => {
                     {...register('account_number')}
                   />
 
-                  <SelectField
-                    label="Account Type"
-                    error={errors.account_type?.message}
-                    required
-                    {...register('account_type')}
-                  >
-                    <option value="demat">Demat</option>
-                    <option value="trading">Trading</option>
-                    <option value="demat_trading">Demat + Trading</option>
-                  </SelectField>
+                  <Controller
+                    name="account_type"
+                    control={control}
+                    render={({ field }) => (
+                      <SelectField
+                        label="Account Type"
+                        error={errors.account_type?.message}
+                        required
+                        options={accountTypeOptions}
+                        value={field.value}
+                        onChange={(value) => field.onChange(value)}
+                      />
+                    )}
+                  />
 
                   <InputField
                     label="DP ID"

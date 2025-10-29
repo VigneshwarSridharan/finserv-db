@@ -16,7 +16,7 @@ import {
   Portal,
   Grid,
 } from '@chakra-ui/react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { transactionsService } from '../../api/services/securities.service';
@@ -65,6 +65,7 @@ const AddTransactionDialog = ({
     handleSubmit,
     reset,
     watch,
+    control,
     formState: { errors },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
@@ -85,6 +86,15 @@ const AddTransactionDialog = ({
   // Calculate total_amount and net_amount
   const totalAmount = (quantity || 0) * (price || 0);
   const netAmount = totalAmount + brokerage + taxes + otherCharges;
+
+  // Options for SelectField
+  const transactionTypeOptions = [
+    { value: 'buy', label: 'Buy' },
+    { value: 'sell', label: 'Sell' },
+    { value: 'dividend', label: 'Dividend' },
+    { value: 'bonus', label: 'Bonus' },
+    { value: 'split', label: 'Split' },
+  ];
 
   const createMutation = useMutation({
     mutationFn: (data: CreateTransactionRequest) => transactionsService.create(data),
@@ -147,18 +157,20 @@ const AddTransactionDialog = ({
             <form onSubmit={handleSubmit(onSubmit)}>
               <DialogBody>
                 <Stack gap={4}>
-                  <SelectField
-                    label="Transaction Type"
-                    error={errors.transaction_type?.message}
-                    required
-                    {...register('transaction_type')}
-                  >
-                    <option value="buy">Buy</option>
-                    <option value="sell">Sell</option>
-                    <option value="dividend">Dividend</option>
-                    <option value="bonus">Bonus</option>
-                    <option value="split">Split</option>
-                  </SelectField>
+                  <Controller
+                    name="transaction_type"
+                    control={control}
+                    render={({ field }) => (
+                      <SelectField
+                        label="Transaction Type"
+                        error={errors.transaction_type?.message}
+                        required
+                        options={transactionTypeOptions}
+                        value={field.value}
+                        onChange={(value) => field.onChange(value)}
+                      />
+                    )}
+                  />
 
                   <InputField
                     label="Transaction Date"
@@ -193,7 +205,7 @@ const AddTransactionDialog = ({
                     type="text"
                     value={totalAmount.toFixed(2)}
                     disabled
-                    helpText="Auto-calculated: Quantity × Price"
+                    helperText="Auto-calculated: Quantity × Price"
                   />
 
                   <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={4}>
@@ -227,7 +239,7 @@ const AddTransactionDialog = ({
                     type="text"
                     value={netAmount.toFixed(2)}
                     disabled
-                    helpText="Total Amount + Brokerage + Taxes + Other Charges"
+                    helperText="Total Amount + Brokerage + Taxes + Other Charges"
                   />
 
                   <InputField

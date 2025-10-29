@@ -281,6 +281,13 @@ export interface FixedDeposit {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // View-specific fields (from v_fixed_deposits)
+  user_name?: string;
+  bank_name?: string;
+  account_number?: string;
+  status?: string;
+  days_to_maturity?: number;
+  id?: number; // Alias for fd_id
 }
 
 export interface CreateFixedDepositRequest {

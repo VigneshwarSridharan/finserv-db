@@ -16,7 +16,7 @@ import {
   Portal,
   Grid,
 } from '@chakra-ui/react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { assetService } from '../../api/services/assets.service';
@@ -64,10 +64,29 @@ const GoldDetailsDialog = ({ isOpen, onClose, assetId, onSuccess }: GoldDetailsD
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<GoldFormData>({
     resolver: zodResolver(goldSchema),
   });
+
+  // Options for SelectField
+  const goldTypeOptions = [
+    { value: 'jewelry', label: 'Jewelry' },
+    { value: 'coins', label: 'Coins' },
+    { value: 'bars', label: 'Bars' },
+    { value: 'etf', label: 'ETF' },
+    { value: 'mutual_fund', label: 'Mutual Fund' },
+  ];
+
+  const purityOptions = [
+    { value: '18K', label: '18K' },
+    { value: '22K', label: '22K' },
+    { value: '24K', label: '24K' },
+    { value: '916', label: '916 (22K)' },
+    { value: '995', label: '995 (24K)' },
+    { value: '999', label: '999 (24K)' },
+  ];
 
   useEffect(() => {
     if (isOpen && existingDetails) {
@@ -171,32 +190,35 @@ const GoldDetailsDialog = ({ isOpen, onClose, assetId, onSuccess }: GoldDetailsD
               <DialogBody>
                 <Stack gap={4}>
                   <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={4}>
-                    <SelectField
-                      label="Gold Type"
-                      required
-                      error={errors.gold_type?.message}
-                      {...register('gold_type')}
-                    >
-                      <option value="jewelry">Jewelry</option>
-                      <option value="coins">Coins</option>
-                      <option value="bars">Bars</option>
-                      <option value="etf">ETF</option>
-                      <option value="mutual_fund">Mutual Fund</option>
-                    </SelectField>
+                    <Controller
+                      name="gold_type"
+                      control={control}
+                      render={({ field }) => (
+                        <SelectField
+                          label="Gold Type"
+                          required
+                          error={errors.gold_type?.message}
+                          options={goldTypeOptions}
+                          value={field.value}
+                          onChange={(value) => field.onChange(value)}
+                        />
+                      )}
+                    />
 
-                    <SelectField
-                      label="Purity"
-                      required
-                      error={errors.purity?.message}
-                      {...register('purity')}
-                    >
-                      <option value="18K">18K</option>
-                      <option value="22K">22K</option>
-                      <option value="24K">24K</option>
-                      <option value="916">916 (22K)</option>
-                      <option value="995">995 (24K)</option>
-                      <option value="999">999 (24K)</option>
-                    </SelectField>
+                    <Controller
+                      name="purity"
+                      control={control}
+                      render={({ field }) => (
+                        <SelectField
+                          label="Purity"
+                          required
+                          error={errors.purity?.message}
+                          options={purityOptions}
+                          value={field.value}
+                          onChange={(value) => field.onChange(value)}
+                        />
+                      )}
+                    />
                   </Grid>
 
                   <InputField

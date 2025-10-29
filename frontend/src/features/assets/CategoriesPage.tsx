@@ -22,7 +22,7 @@ import {
   Badge,
 } from '@chakra-ui/react';
 import { LuPlus, LuPencil, LuTrash2 } from 'react-icons/lu';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { assetCategoryService } from '../../api/services/assets.service';
@@ -65,10 +65,20 @@ const CategoriesPage = () => {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
   });
+
+  // Options for SelectField
+  const categoryTypeOptions = [
+    { value: 'precious_metal', label: 'Precious Metal' },
+    { value: 'real_estate', label: 'Real Estate' },
+    { value: 'commodity', label: 'Commodity' },
+    { value: 'collectible', label: 'Collectible' },
+    { value: 'other', label: 'Other' },
+  ];
 
   const createMutation = useMutation({
     mutationFn: assetCategoryService.create,
@@ -259,18 +269,20 @@ const CategoriesPage = () => {
                       error={errors.category_name?.message}
                       {...register('category_name')}
                     />
-                    <SelectField
-                      label="Category Type"
-                      required
-                      error={errors.category_type?.message}
-                      {...register('category_type')}
-                    >
-                      <option value="precious_metal">Precious Metal</option>
-                      <option value="real_estate">Real Estate</option>
-                      <option value="commodity">Commodity</option>
-                      <option value="collectible">Collectible</option>
-                      <option value="other">Other</option>
-                    </SelectField>
+                    <Controller
+                      name="category_type"
+                      control={control}
+                      render={({ field }) => (
+                        <SelectField
+                          label="Category Type"
+                          required
+                          error={errors.category_type?.message}
+                          options={categoryTypeOptions}
+                          value={field.value}
+                          onChange={(value) => field.onChange(value)}
+                        />
+                      )}
+                    />
                     <TextareaField
                       label="Description"
                       error={errors.description?.message}

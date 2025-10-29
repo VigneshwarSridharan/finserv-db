@@ -94,6 +94,34 @@ JOIN user_bank_accounts uba ON fd.account_id = uba.account_id
 JOIN banks b ON uba.bank_id = b.bank_id
 WHERE fd.is_active = TRUE AND u.is_active = TRUE;
 
+-- FD interest payments detailed view
+CREATE VIEW v_fd_interest_payments AS
+SELECT 
+    fip.payment_id,
+    fip.fd_id,
+    fip.payment_date,
+    fip.interest_amount,
+    fip.cumulative_interest,
+    fip.payment_status,
+    fip.credited_date,
+    fd.fd_number,
+    fd.principal_amount,
+    fd.interest_rate,
+    fd.interest_payout_frequency,
+    fd.user_id,
+    u.first_name || ' ' || u.last_name as user_name,
+    b.bank_name,
+    uba.account_number,
+    fd.start_date,
+    fd.maturity_date
+FROM fd_interest_payments fip
+JOIN fixed_deposits fd ON fip.fd_id = fd.fd_id
+JOIN users u ON fd.user_id = u.user_id
+JOIN user_bank_accounts uba ON fd.account_id = uba.account_id
+JOIN banks b ON uba.bank_id = b.bank_id
+WHERE u.is_active = TRUE
+ORDER BY fip.payment_date DESC;
+
 -- Recurring deposits detailed view
 CREATE VIEW v_recurring_deposits AS
 SELECT 

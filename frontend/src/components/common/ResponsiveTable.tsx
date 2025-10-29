@@ -1,4 +1,5 @@
-import { ReactNode, useState } from 'react';
+import { useState, Fragment } from 'react';
+import type { ReactNode } from 'react';
 import {
   Table,
   Box,
@@ -33,7 +34,7 @@ export interface ResponsiveTableProps<T> {
   data: T[];
   columns: ColumnDef<T>[];
   mobileConfig: MobileConfig<T>;
-  variant?: 'outline' | 'simple' | 'striped';
+  variant?: 'outline' | 'line';
   expandableConfig?: ExpandableConfig<T>;
 }
 
@@ -114,8 +115,8 @@ function ResponsiveTable<T>({
           const isExpanded = expandKey ? expandedRows.has(expandKey) : false;
 
           return (
-            <>
-              <Table.Row key={`row-${rowKey}`} _hover={{ bg: 'bg.muted' }}>
+            <Fragment key={rowKey}>
+              <Table.Row _hover={{ bg: 'bg.muted' }}>
                 {expandableConfig && (
                   <Table.Cell>
                     <IconButton
@@ -135,13 +136,13 @@ function ResponsiveTable<T>({
                 ))}
               </Table.Row>
               {expandableConfig && isExpanded && (
-                <Table.Row key={`expanded-${rowKey}`}>
+                <Table.Row>
                   <Table.Cell colSpan={columns.length + 1}  p={0}>
                     {expandableConfig.expandedContent(item)}
                   </Table.Cell>
                 </Table.Row>
               )}
-            </>
+            </Fragment>
           );
         })}
       </Table.Body>

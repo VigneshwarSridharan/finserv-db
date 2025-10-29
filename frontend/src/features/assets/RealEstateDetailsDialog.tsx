@@ -16,7 +16,7 @@ import {
   Portal,
   Grid,
 } from '@chakra-ui/react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { assetService } from '../../api/services/assets.service';
@@ -72,10 +72,27 @@ const RealEstateDetailsDialog = ({ isOpen, onClose, assetId, onSuccess }: RealEs
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<RealEstateFormData>({
     resolver: zodResolver(realEstateSchema),
   });
+
+  // Options for SelectField
+  const propertyTypeOptions = [
+    { value: 'residential', label: 'Residential' },
+    { value: 'commercial', label: 'Commercial' },
+    { value: 'industrial', label: 'Industrial' },
+    { value: 'agricultural', label: 'Agricultural' },
+    { value: 'land', label: 'Land' },
+  ];
+
+  const occupancyStatusOptions = [
+    { value: 'self_occupied', label: 'Self Occupied' },
+    { value: 'rented', label: 'Rented' },
+    { value: 'vacant', label: 'Vacant' },
+    { value: 'under_construction', label: 'Under Construction' },
+  ];
 
   useEffect(() => {
     if (isOpen && existingDetails) {
@@ -203,18 +220,20 @@ const RealEstateDetailsDialog = ({ isOpen, onClose, assetId, onSuccess }: RealEs
               <DialogCloseTrigger />
               <DialogBody>
                 <Stack gap={4}>
-                  <SelectField
-                    label="Property Type"
-                    required
-                    error={errors.property_type?.message}
-                    {...register('property_type')}
-                  >
-                    <option value="residential">Residential</option>
-                    <option value="commercial">Commercial</option>
-                    <option value="industrial">Industrial</option>
-                    <option value="agricultural">Agricultural</option>
-                    <option value="land">Land</option>
-                  </SelectField>
+                  <Controller
+                    name="property_type"
+                    control={control}
+                    render={({ field }) => (
+                      <SelectField
+                        label="Property Type"
+                        required
+                        error={errors.property_type?.message}
+                        options={propertyTypeOptions}
+                        value={field.value}
+                        onChange={(value) => field.onChange(value)}
+                      />
+                    )}
+                  />
 
                   <TextareaField
                     label="Property Address"
@@ -367,16 +386,21 @@ const RealEstateDetailsDialog = ({ isOpen, onClose, assetId, onSuccess }: RealEs
                     />
                   </Grid>
 
-                  <SelectField
-                    label="Occupancy Status"
-                    error={errors.occupancy_status?.message}
-                    {...register('occupancy_status')}
-                  >
-                    <option value="self_occupied">Self Occupied</option>
-                    <option value="rented">Rented</option>
-                    <option value="vacant">Vacant</option>
-                    <option value="under_construction">Under Construction</option>
-                  </SelectField>
+                  <Controller
+                    name="occupancy_status"
+                    control={control}
+                    render={({ field }) => (
+                      <SelectField
+                        label="Occupancy Status"
+                        error={errors.occupancy_status?.message}
+                        options={occupancyStatusOptions}
+                        value={field.value || undefined}
+                        onChange={(value) => field.onChange(value)}
+                        placeholder="Select status"
+                        isClearable
+                      />
+                    )}
+                  />
                 </Stack>
               </DialogBody>
               <DialogFooter>

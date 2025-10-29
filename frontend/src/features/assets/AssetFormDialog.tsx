@@ -16,7 +16,7 @@ import {
   Portal,
   Grid,
 } from '@chakra-ui/react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { assetService, assetCategoryService } from '../../api/services/assets.service';
@@ -68,6 +68,7 @@ const AssetFormDialog = ({ isOpen, onClose, asset, defaultCategoryId, onSuccess 
     reset,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<AssetFormData>({
     resolver: zodResolver(assetSchema),
@@ -83,6 +84,17 @@ const AssetFormDialog = ({ isOpen, onClose, asset, defaultCategoryId, onSuccess 
   const subcategories = categories
     .find((cat) => cat.category_id === categoryId)
     ?.subcategories || [];
+
+  // Options for SelectField
+  const categoryOptions = categories.map((cat) => ({
+    value: cat.category_id,
+    label: cat.category_name,
+  }));
+
+  const subcategoryOptions = subcategories.map((sub: any) => ({
+    value: sub.subcategory_id,
+    label: sub.subcategory_name,
+  }));
 
   useEffect(() => {
     if (isOpen) {
@@ -203,35 +215,42 @@ const AssetFormDialog = ({ isOpen, onClose, asset, defaultCategoryId, onSuccess 
                   />
 
                   <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={4}>
-                    <SelectField
-                      label="Category"
-                      required
-                      error={errors.category_id?.message}
-                      disabled={!!defaultCategoryId}
-                      {...register('category_id', { valueAsNumber: true })}
-                    >
-                      <option value="">Select category</option>
-                      {categories.map((cat) => (
-                        <option key={cat.category_id} value={cat.category_id}>
-                          {cat.category_name}
-                        </option>
-                      ))}
-                    </SelectField>
+                    <Controller
+                      name="category_id"
+                      control={control}
+                      render={({ field }) => (
+                        <SelectField
+                          label="Category"
+                          required
+                          error={errors.category_id?.message}
+                          isDisabled={!!defaultCategoryId}
+                          options={categoryOptions}
+                          value={field.value}
+                          onChange={(value) => {
+                            field.onChange(value);
+                            // Reset subcategory when category changes
+                            setValue('subcategory_id', null);
+                          }}
+                          placeholder="Select category"
+                        />
+                      )}
+                    />
 
-                    <SelectField
-                      label="Subcategory"
-                      error={errors.subcategory_id?.message}
-                      {...register('subcategory_id', { 
-                        setValueAs: (v) => v === '' || v === null ? null : Number(v)
-                      })}
-                    >
-                      <option value="">None</option>
-                      {subcategories.map((sub: any) => (
-                        <option key={sub.subcategory_id} value={sub.subcategory_id}>
-                          {sub.subcategory_name}
-                        </option>
-                      ))}
-                    </SelectField>
+                    <Controller
+                      name="subcategory_id"
+                      control={control}
+                      render={({ field }) => (
+                        <SelectField
+                          label="Subcategory"
+                          error={errors.subcategory_id?.message}
+                          options={subcategoryOptions}
+                          value={field.value || undefined}
+                          onChange={(value) => field.onChange(value)}
+                          placeholder="None"
+                          isClearable
+                        />
+                      )}
+                    />
                   </Grid>
 
                   <TextareaField

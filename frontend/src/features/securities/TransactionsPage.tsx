@@ -135,6 +135,25 @@ const TransactionsPage = () => {
   const brokerAccounts = accountsResponse?.data || [];
   const securities = securitiesResponse?.data || [];
 
+  // Options for SelectField
+  const brokerAccountOptions = brokerAccounts.map((account: any) => ({
+    value: account.account_id,
+    label: `${account.broker?.broker_name || 'Unknown'} - ${account.account_number}`,
+  }));
+
+  const securityOptions = securities.map((security: any) => ({
+    value: security.security_id,
+    label: `${security.name} (${security.symbol})`,
+  }));
+
+  const transactionTypeOptions = [
+    { value: 'buy', label: 'Buy' },
+    { value: 'sell', label: 'Sell' },
+    { value: 'dividend', label: 'Dividend' },
+    { value: 'bonus', label: 'Bonus' },
+    { value: 'split', label: 'Split' },
+  ];
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -376,15 +395,10 @@ const TransactionsPage = () => {
                       required
                       error={errors.account_id?.message}
                       placeholder="Select broker account"
-                      value={field.value?.toString()}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    >
-                      {brokerAccounts.map((account: any) => (
-                        <option key={account.account_id} value={account.account_id}>
-                          {account.broker?.broker_name || 'Unknown'} - {account.account_number}
-                        </option>
-                      ))}
-                    </SelectField>
+                      options={brokerAccountOptions}
+                      value={field.value}
+                      onChange={(value) => field.onChange(value)}
+                    />
                   )}
                 />
 
@@ -397,15 +411,10 @@ const TransactionsPage = () => {
                       required
                       error={errors.security_id?.message}
                       placeholder="Select security"
-                      value={field.value?.toString()}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    >
-                      {securities.map((security: any) => (
-                        <option key={security.security_id} value={security.security_id}>
-                          {security.name} ({security.symbol})
-                        </option>
-                      ))}
-                    </SelectField>
+                      options={securityOptions}
+                      value={field.value}
+                      onChange={(value) => field.onChange(value)}
+                    />
                   )}
                 />
 
@@ -418,15 +427,10 @@ const TransactionsPage = () => {
                       required
                       error={errors.transaction_type?.message}
                       placeholder="Select type"
+                      options={transactionTypeOptions}
                       value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
-                    >
-                      <option value="buy">Buy</option>
-                      <option value="sell">Sell</option>
-                      <option value="dividend">Dividend</option>
-                      <option value="bonus">Bonus</option>
-                      <option value="split">Split</option>
-                    </SelectField>
+                      onChange={(value) => field.onChange(value)}
+                    />
                   )}
                 />
 

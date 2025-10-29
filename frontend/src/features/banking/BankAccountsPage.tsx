@@ -183,6 +183,21 @@ const BankAccountsPage = () => {
 
   const activeAccounts = accounts.filter((acc) => acc.is_active).length;
 
+  // Options for SelectField
+  const bankOptions = banks.map((bank: any) => ({
+    value: bank.bank_id,
+    label: bank.bank_name,
+  }));
+
+  const accountTypeOptions = [
+    { value: 'savings', label: 'Savings' },
+    { value: 'current', label: 'Current' },
+    { value: 'fixed_deposit', label: 'Fixed Deposit' },
+    { value: 'recurring_deposit', label: 'Recurring Deposit' },
+    { value: 'nro', label: 'NRO' },
+    { value: 'nre', label: 'NRE' },
+  ];
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -384,15 +399,10 @@ const BankAccountsPage = () => {
                           required
                           error={errors.bank_id?.message}
                           placeholder="Select bank"
-                          value={field.value?.toString()}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        >
-                          {banks.map((bank: any) => (
-                            <option key={bank.bank_id} value={bank.bank_id}>
-                              {bank.bank_name}
-                            </option>
-                          ))}
-                        </SelectField>
+                          options={bankOptions}
+                          value={field.value}
+                          onChange={(value) => field.onChange(value)}
+                        />
                       )}
                     />
                     <InputField
@@ -410,16 +420,10 @@ const BankAccountsPage = () => {
                           required
                           error={errors.account_type?.message}
                           placeholder="Select type"
+                          options={accountTypeOptions}
                           value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                        >
-                          <option value="savings">Savings</option>
-                          <option value="current">Current</option>
-                          <option value="fixed_deposit">Fixed Deposit</option>
-                          <option value="recurring_deposit">Recurring Deposit</option>
-                          <option value="nro">NRO</option>
-                          <option value="nre">NRE</option>
-                        </SelectField>
+                          onChange={(value) => field.onChange(value)}
+                        />
                       )}
                     />
                     <InputField

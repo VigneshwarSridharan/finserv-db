@@ -25,7 +25,7 @@ import {
   DialogPositioner,
 } from '@chakra-ui/react';
 import { LuPlus, LuPencil, LuTrash2, LuChevronDown, LuExternalLink } from 'react-icons/lu';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { brokerService } from '../../api/services/securities.service';
@@ -67,6 +67,7 @@ const BrokersPage = () => {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<BrokerFormData>({
     resolver: zodResolver(brokerSchema),
@@ -174,6 +175,14 @@ const BrokersPage = () => {
       createMutation.mutate(data);
     }
   };
+
+  // Options for SelectField
+  const brokerTypeOptions = [
+    { value: 'full_service', label: 'Full Service' },
+    { value: 'discount', label: 'Discount' },
+    { value: 'online', label: 'Online' },
+    { value: 'bank', label: 'Bank' },
+  ];
 
   const handleDelete = (broker: Broker) => {
     setSelectedBroker(broker);
@@ -423,17 +432,20 @@ const BrokersPage = () => {
                       {...register('broker_code')}
                       placeholder="e.g., ZERODHA, UPSTOX"
                     />
-                    <SelectField
-                      label="Broker Type"
-                      required
-                      error={errors.broker_type?.message}
-                      {...register('broker_type')}
-                    >
-                      <option value="full_service">Full Service</option>
-                      <option value="discount">Discount</option>
-                      <option value="online">Online</option>
-                      <option value="bank">Bank</option>
-                    </SelectField>
+                    <Controller
+                      name="broker_type"
+                      control={control}
+                      render={({ field }) => (
+                        <SelectField
+                          label="Broker Type"
+                          required
+                          error={errors.broker_type?.message}
+                          options={brokerTypeOptions}
+                          value={field.value}
+                          onChange={(value) => field.onChange(value)}
+                        />
+                      )}
+                    />
                     <InputField
                       label="Website"
                       type="url"

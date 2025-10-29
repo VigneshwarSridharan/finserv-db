@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodError } from 'zod';
+import { ValidationError } from './errorHandler';
+import logger from '../utils/logger';
 
 /**
  * Validation schemas
@@ -248,6 +250,30 @@ export const updateRecurringDepositSchema = z.object({
 });
 
 /**
+ * Format Zod errors into user-friendly format
+ */
+function formatZodErrors(error: ZodError): Record<string, any> {
+  const formattedErrors: Record<string, any> = {
+    fields: {},
+    count: error.errors.length,
+  };
+
+  error.errors.forEach((err) => {
+    const path = err.path.join('.');
+    const field = path || 'root';
+    
+    formattedErrors.fields[field] = {
+      message: err.message,
+      code: err.code,
+      expected: (err as any).expected,
+      received: (err as any).received,
+    };
+  });
+
+  return formattedErrors;
+}
+
+/**
  * Generic validation middleware factory
  * @param schema - Zod schema to validate against
  * @returns Express middleware function
@@ -259,14 +285,24 @@ export function validate(schema: z.ZodSchema) {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({
-          success: false,
-          error: 'Validation failed',
-          details: error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message
-          }))
+        const formattedErrors = formatZodErrors(error);
+        
+        // Log validation failure at debug level
+        logger.debug('Validation failed', {
+          requestId: (req as any).id,
+          path: req.path,
+          method: req.method,
+          errors: formattedErrors,
         });
+
+        // Create ValidationError with formatted details
+        const validationError = new ValidationError('Validation failed', {
+          errors: formattedErrors.fields,
+          errorCount: formattedErrors.count,
+        });
+
+        // Forward to error handler
+        return next(validationError);
       }
       next(error);
     }

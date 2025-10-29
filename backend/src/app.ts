@@ -42,6 +42,10 @@ import portfolioOverviewRoutes from './routes/portfolio-overview.routes';
 import userProfileRoutes from './routes/user-profile.routes';
 
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { requestContext } from './middleware/request-context';
+import logger from './utils/logger';
+import { checkDatabaseHealth, getDatabaseCircuitBreaker } from './config/database-resilient';
+import { getCircuitBreakerStats } from './utils/circuit-breaker';
 
 /**
  * Create and configure Express application
@@ -59,21 +63,104 @@ export function createApp(): Application {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Request logging middleware (simple logger)
-  app.use((req: Request, _res: Response, next: express.NextFunction) => {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] ${req.method} ${req.path}`);
+  // Request context middleware - adds request ID and logger
+  app.use(requestContext);
+
+  // Request logging middleware (structured logging)
+  app.use((req: Request, res: Response, next: express.NextFunction) => {
+    const startTime = Date.now();
+    
+    // Log incoming request
+    logger.http('Incoming request', {
+      requestId: req.id,
+      method: req.method,
+      path: req.path,
+      query: req.query,
+      ip: req.ip || req.socket.remoteAddress,
+      userAgent: req.get('user-agent'),
+    });
+
+    // Log response when finished
+    res.on('finish', () => {
+      const duration = Date.now() - startTime;
+      const logLevel = res.statusCode >= 400 ? 'warn' : 'http';
+      
+      logger[logLevel]('Request completed', {
+        requestId: req.id,
+        method: req.method,
+        path: req.path,
+        statusCode: res.statusCode,
+        duration: `${duration}ms`,
+        contentLength: res.get('content-length'),
+      });
+    });
+
     next();
   });
 
-  // Health check endpoint
-  app.get('/health', (_req: Request, res: Response) => {
-    res.status(200).json({
-      success: true,
-      message: 'Server is healthy',
-      timestamp: new Date().toISOString(),
-      environment: env.NODE_ENV
-    });
+  // Health check endpoint (enhanced)
+  app.get('/health', async (_req: Request, res: Response) => {
+    try {
+      // Check database health
+      const dbHealth = await checkDatabaseHealth();
+      const dbCircuitBreaker = getDatabaseCircuitBreaker();
+      const dbStats = getCircuitBreakerStats(dbCircuitBreaker);
+
+      // Get memory usage
+      const memoryUsage = process.memoryUsage();
+      const memoryMB = {
+        heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+        heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+        external: Math.round(memoryUsage.external / 1024 / 1024),
+        rss: Math.round(memoryUsage.rss / 1024 / 1024),
+      };
+
+      // Calculate uptime
+      const uptimeSeconds = process.uptime();
+      const uptimeFormatted = `${Math.floor(uptimeSeconds / 3600)}h ${Math.floor((uptimeSeconds % 3600) / 60)}m ${Math.floor(uptimeSeconds % 60)}s`;
+
+      // Determine overall status
+      const isHealthy = dbHealth.isHealthy;
+      const status = isHealthy ? 'healthy' : 'unhealthy';
+      const statusCode = isHealthy ? 200 : 503;
+
+      res.status(statusCode).json({
+        success: isHealthy,
+        status,
+        timestamp: new Date().toISOString(),
+        environment: env.NODE_ENV,
+        uptime: uptimeFormatted,
+        uptimeSeconds: Math.floor(uptimeSeconds),
+        database: {
+          status: dbHealth.isHealthy ? 'connected' : 'disconnected',
+          circuitBreaker: {
+            state: dbHealth.circuitState,
+            stats: {
+              successes: dbStats.successes,
+              failures: dbStats.failures,
+              rejects: dbStats.rejects,
+              timeouts: dbStats.timeouts,
+              latencyMean: Math.round(dbStats.latencyMean),
+            },
+          },
+          error: dbHealth.error,
+        },
+        memory: memoryMB,
+        node: {
+          version: process.version,
+          platform: process.platform,
+          arch: process.arch,
+        },
+      });
+    } catch (error: any) {
+      logger.error('Health check failed', { error: error.message });
+      res.status(503).json({
+        success: false,
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        error: 'Health check failed',
+      });
+    }
   });
 
   // API Documentation - Swagger UI

@@ -14,7 +14,19 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('24h'),
   PORT: z.string().default('3000'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  CORS_ORIGIN: z.string().default('http://localhost:3001')
+  CORS_ORIGIN: z.string().default('http://localhost:3001'),
+  
+  // Logging configuration
+  LOG_LEVEL: z.enum(['error', 'warn', 'info', 'http', 'debug']).default('info'),
+  LOG_DIR: z.string().default('./logs'),
+  ENABLE_FILE_LOGGING: z.string().transform(val => val === 'true').default('true'),
+  
+  // Database resilience configuration
+  DB_RETRY_ATTEMPTS: z.string().transform(val => parseInt(val, 10)).default('3'),
+  DB_CIRCUIT_BREAKER_THRESHOLD: z.string().transform(val => parseInt(val, 10)).default('5'),
+  
+  // Server configuration
+  GRACEFUL_SHUTDOWN_TIMEOUT: z.string().transform(val => parseInt(val, 10)).default('10000'),
 });
 
 const parsed = envSchema.safeParse(process.env);

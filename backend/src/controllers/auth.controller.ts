@@ -4,8 +4,9 @@ import { eq } from 'drizzle-orm';
 import { db } from '../config/database';
 import { users } from '../db/schema';
 import { generateToken } from '../utils/jwt';
-import { ApiError } from '../middleware/errorHandler';
+import { AuthenticationError, ConflictError } from '../middleware/errorHandler';
 import { UserCreateDTO, UserLoginDTO, AuthResponse } from '../types';
+import { asyncHandler } from '../utils/async-handler';
 
 /**
  * @swagger
@@ -53,78 +54,74 @@ import { UserCreateDTO, UserLoginDTO, AuthResponse } from '../types';
  *       500:
  *         description: Server error
  */
-export async function register(req: Request, res: Response) {
-  try {
-    const userData: UserCreateDTO = req.body;
+export const register = asyncHandler(async (req: Request, res: Response) => {
+  const userData: UserCreateDTO = req.body;
 
-    // Check if user already exists
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, userData.email))
-      .limit(1);
+  // Check if user already exists
+  const existingUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, userData.email))
+    .limit(1);
 
-    if (existingUser.length > 0) {
-      throw new ApiError(400, 'User with this email already exists');
-    }
-
-    // Check if username is taken
-    const existingUsername = await db
-      .select()
-      .from(users)
-      .where(eq(users.username, userData.username))
-      .limit(1);
-
-    if (existingUsername.length > 0) {
-      throw new ApiError(400, 'Username already taken');
-    }
-
-    // Hash password
-    const saltRounds = 10;
-    const password_hash = await bcrypt.hash(userData.password, saltRounds);
-
-    // Create user
-    const newUser = await db
-      .insert(users)
-      .values({
-        username: userData.username,
-        email: userData.email,
-        password_hash,
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-        phone: userData.phone,
-        date_of_birth: userData.date_of_birth
-      })
-      .returning();
-
-    // Generate JWT token
-    const token = generateToken(
-      newUser[0].user_id,
-      newUser[0].email,
-      newUser[0].username
-    );
-
-    // Prepare response
-    const response: AuthResponse = {
-      user: {
-        user_id: newUser[0].user_id,
-        username: newUser[0].username,
-        email: newUser[0].email,
-        first_name: newUser[0].first_name,
-        last_name: newUser[0].last_name
-      },
-      token
-    };
-
-    res.status(201).json({
-      success: true,
-      data: response,
-      message: 'User registered successfully'
-    });
-  } catch (error) {
-    throw error;
+  if (existingUser.length > 0) {
+    throw new ConflictError('User with this email already exists');
   }
-}
+
+  // Check if username is taken
+  const existingUsername = await db
+    .select()
+    .from(users)
+    .where(eq(users.username, userData.username))
+    .limit(1);
+
+  if (existingUsername.length > 0) {
+    throw new ConflictError('Username already taken');
+  }
+
+  // Hash password
+  const saltRounds = 10;
+  const password_hash = await bcrypt.hash(userData.password, saltRounds);
+
+  // Create user
+  const newUser = await db
+    .insert(users)
+    .values({
+      username: userData.username,
+      email: userData.email,
+      password_hash,
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      phone: userData.phone,
+      date_of_birth: userData.date_of_birth
+    })
+    .returning();
+
+  // Generate JWT token
+  const token = generateToken(
+    newUser[0].user_id,
+    newUser[0].email,
+    newUser[0].username
+  );
+
+  // Prepare response
+  const response: AuthResponse = {
+    user: {
+      user_id: newUser[0].user_id,
+      username: newUser[0].username,
+      email: newUser[0].email,
+      first_name: newUser[0].first_name,
+      last_name: newUser[0].last_name
+    },
+    token
+  };
+
+  res.status(201).json({
+    success: true,
+    data: response,
+    message: 'User registered successfully'
+  });
+});
 
 /**
  * @swagger
@@ -155,59 +152,55 @@ export async function register(req: Request, res: Response) {
  *       500:
  *         description: Server error
  */
-export async function login(req: Request, res: Response) {
-  try {
-    const { email, password }: UserLoginDTO = req.body;
+export const login = asyncHandler(async (req: Request, res: Response) => {
+  const { email, password }: UserLoginDTO = req.body;
 
-    // Find user by email
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+  // Find user by email
+  const user = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
 
-    if (user.length === 0) {
-      throw new ApiError(401, 'Invalid email or password');
-    }
-
-    // Check if user is active
-    if (!user[0].is_active) {
-      throw new ApiError(401, 'Account is inactive. Please contact support');
-    }
-
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user[0].password_hash);
-
-    if (!isPasswordValid) {
-      throw new ApiError(401, 'Invalid email or password');
-    }
-
-    // Generate JWT token
-    const token = generateToken(
-      user[0].user_id,
-      user[0].email,
-      user[0].username
-    );
-
-    // Prepare response
-    const response: AuthResponse = {
-      user: {
-        user_id: user[0].user_id,
-        username: user[0].username,
-        email: user[0].email,
-        first_name: user[0].first_name,
-        last_name: user[0].last_name
-      },
-      token
-    };
-
-    res.status(200).json({
-      success: true,
-      data: response,
-      message: 'Login successful'
-    });
-  } catch (error) {
-    throw error;
+  if (user.length === 0) {
+    throw new AuthenticationError('Invalid email or password');
   }
-}
+
+  // Check if user is active
+  if (!user[0].is_active) {
+    throw new AuthenticationError('Account is inactive. Please contact support');
+  }
+
+  // Verify password
+  const isPasswordValid = await bcrypt.compare(password, user[0].password_hash);
+
+  if (!isPasswordValid) {
+    throw new AuthenticationError('Invalid email or password');
+  }
+
+  // Generate JWT token
+  const token = generateToken(
+    user[0].user_id,
+    user[0].email,
+    user[0].username
+  );
+
+  // Prepare response
+  const response: AuthResponse = {
+    user: {
+      user_id: user[0].user_id,
+      username: user[0].username,
+      email: user[0].email,
+      first_name: user[0].first_name,
+      last_name: user[0].last_name
+    },
+    token
+  };
+
+  res.status(200).json({
+    success: true,
+    data: response,
+    message: 'Login successful'
+  });
+});
 

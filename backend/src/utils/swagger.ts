@@ -2164,7 +2164,28 @@ A comprehensive RESTful API for managing investment portfolios including securit
           { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
           { name: 'installmentId', in: 'path', required: true, schema: { type: 'integer' } }
         ],
-        responses: { 200: { description: 'Payment recorded' } }
+        responses: { 
+          200: { description: 'Payment recorded successfully' },
+          400: { description: 'Installment is already paid' },
+          404: { description: 'RD or installment not found' }
+        }
+      }
+    },
+    '/deposits/recurring/{id}/installments/{installmentId}/rollback': {
+      post: {
+        tags: ['Recurring Deposits'],
+        summary: 'Rollback installment payment',
+        description: 'Reverse a recorded installment payment',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+          { name: 'installmentId', in: 'path', required: true, schema: { type: 'integer' } }
+        ],
+        responses: { 
+          200: { description: 'Payment rollback successful' },
+          400: { description: 'Only paid installments can be rolled back' },
+          404: { description: 'RD or installment not found' }
+        }
       }
     },
 

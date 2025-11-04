@@ -153,6 +153,42 @@ export async function createRecurringDeposit(req: AuthRequest, res: Response) {
       })
       .returning();
 
+    const rdId = newRd[0].rd_id;
+
+    // Create installments for the RD
+    const installments = [];
+    const startDate = new Date(rdData.start_date);
+    const installmentDay = rdData.installment_day;
+    const monthlyInstallment = rdData.monthly_installment.toString();
+
+    for (let i = 1; i <= rdData.tenure_months; i++) {
+      // Calculate due date: first installment is due one month after start_date on the installment_day
+      // Subsequent installments are monthly thereafter
+      const dueDate = new Date(startDate);
+      dueDate.setMonth(dueDate.getMonth() + i);
+      
+      // Set the installment day, handling month-end edge cases (e.g., if installment_day is 31 but month has 30 days)
+      const daysInMonth = new Date(dueDate.getFullYear(), dueDate.getMonth() + 1, 0).getDate();
+      const actualDay = Math.min(installmentDay, daysInMonth);
+      dueDate.setDate(actualDay);
+
+      installments.push({
+        rd_id: rdId,
+        installment_number: i,
+        due_date: dueDate.toISOString().split('T')[0],
+        installment_amount: monthlyInstallment,
+        paid_amount: '0',
+        paid_date: null,
+        late_fee: '0',
+        payment_status: 'pending'
+      });
+    }
+
+    // Insert all installments in batch
+    if (installments.length > 0) {
+      await db.insert(rdInstallments).values(installments);
+    }
+
     return sendCreated(res, newRd[0], 'Recurring deposit created successfully');
   } catch (error) {
     throw error;
@@ -332,6 +368,11 @@ export async function payInstallment(req: AuthRequest, res: Response) {
       throw new ApiError(404, 'Installment not found');
     }
 
+    // Check if already paid
+    if (installment[0].payment_status === 'paid') {
+      throw new ApiError(400, 'Installment is already paid');
+    }
+
     // Update installment status
     const updated = await db
       .update(rdInstallments)
@@ -344,6 +385,71 @@ export async function payInstallment(req: AuthRequest, res: Response) {
       .returning();
 
     return sendSuccess(res, updated[0], 'Installment payment recorded successfully');
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * Rollback installment payment
+ */
+export async function rollbackInstallment(req: AuthRequest, res: Response) {
+  try {
+    const rdId = parseInt(req.params.id);
+    const installmentId = parseInt(req.params.installmentId);
+    const userId = req.user!.userId;
+
+    if (isNaN(rdId) || isNaN(installmentId)) {
+      throw new ApiError(400, 'Invalid RD ID or installment ID');
+    }
+
+    // Verify RD exists and belongs to user
+    const rd = await db
+      .select()
+      .from(recurringDeposits)
+      .where(eq(recurringDeposits.rd_id, rdId))
+      .limit(1);
+
+    if (rd.length === 0) {
+      throw new ApiError(404, 'Recurring deposit not found');
+    }
+
+    if (rd[0].user_id !== userId) {
+      throw new ApiError(403, 'Access denied to this recurring deposit');
+    }
+
+    // Get installment
+    const installment = await db
+      .select()
+      .from(rdInstallments)
+      .where(
+        and(
+          eq(rdInstallments.rd_id, rdId),
+          eq(rdInstallments.installment_id, installmentId)
+        )
+      )
+      .limit(1);
+
+    if (installment.length === 0) {
+      throw new ApiError(404, 'Installment not found');
+    }
+
+    // Check if payment can be rolled back
+    if (installment[0].payment_status !== 'paid') {
+      throw new ApiError(400, 'Only paid installments can be rolled back');
+    }
+
+    // Rollback the payment - reset to pending
+    const updated = await db
+      .update(rdInstallments)
+      .set({
+        paid_date: null,
+        payment_status: 'pending'
+      })
+      .where(eq(rdInstallments.installment_id, installmentId))
+      .returning();
+
+    return sendSuccess(res, updated[0], 'Installment payment rollback successful');
   } catch (error) {
     throw error;
   }

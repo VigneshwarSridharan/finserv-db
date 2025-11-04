@@ -6,7 +6,8 @@ import {
   updateRecurringDeposit,
   closeRecurringDeposit,
   getInstallments,
-  payInstallment
+  payInstallment,
+  rollbackInstallment
 } from '../controllers/recurring-deposits.controller';
 import { authenticate } from '../middleware/auth';
 import { validate, createRecurringDepositSchema, updateRecurringDepositSchema } from '../middleware/validator';
@@ -64,6 +65,13 @@ router.get('/:id/installments', getInstallments);
  * @access  Private
  */
 router.post('/:id/installments/:installmentId/pay', payInstallment);
+
+/**
+ * @route   POST /deposits/recurring/:id/installments/:installmentId/rollback
+ * @desc    Rollback installment payment
+ * @access  Private
+ */
+router.post('/:id/installments/:installmentId/rollback', rollbackInstallment);
 
 export default router;
 

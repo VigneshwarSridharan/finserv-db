@@ -114,8 +114,12 @@ export const recurringDepositService = {
     return api.get<any[]>(`/deposits/recurring/${rdId}/installments`);
   },
 
-  addInstallmentPayment: async (rdId: number | string, data: any): Promise<ApiResponse<any>> => {
-    return api.post<any>(`/deposits/recurring/${rdId}/installments`, data);
+  payInstallment: async (rdId: number | string, installmentId: number | string): Promise<ApiResponse<any>> => {
+    return api.post<any>(`/deposits/recurring/${rdId}/installments/${installmentId}/pay`);
+  },
+
+  rollbackInstallment: async (rdId: number | string, installmentId: number | string): Promise<ApiResponse<any>> => {
+    return api.post<any>(`/deposits/recurring/${rdId}/installments/${installmentId}/rollback`);
   },
 
   close: async (rdId: number | string): Promise<ApiResponse<RecurringDeposit>> => {

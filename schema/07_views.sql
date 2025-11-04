@@ -122,6 +122,42 @@ JOIN banks b ON uba.bank_id = b.bank_id
 WHERE u.is_active = TRUE
 ORDER BY fip.payment_date DESC;
 
+-- RD installments detailed view
+CREATE VIEW v_rd_installments AS
+SELECT 
+    rdi.installment_id,
+    rdi.rd_id,
+    rdi.installment_number,
+    rdi.due_date,
+    rdi.installment_amount,
+    rdi.paid_amount,
+    rdi.paid_date,
+    rdi.late_fee,
+    rdi.payment_status,
+    rd.rd_number,
+    rd.monthly_installment,
+    rd.interest_rate,
+    rd.tenure_months,
+    rd.installment_day,
+    rd.user_id,
+    u.first_name || ' ' || u.last_name as user_name,
+    b.bank_name,
+    uba.account_number,
+    rd.start_date,
+    rd.maturity_date,
+    CASE 
+        WHEN rdi.payment_status = 'paid' THEN 0
+        WHEN rdi.due_date < CURRENT_DATE AND rdi.payment_status = 'pending' THEN (CURRENT_DATE - rdi.due_date)
+        ELSE 0
+    END as days_overdue
+FROM rd_installments rdi
+JOIN recurring_deposits rd ON rdi.rd_id = rd.rd_id
+JOIN users u ON rd.user_id = u.user_id
+JOIN user_bank_accounts uba ON rd.account_id = uba.account_id
+JOIN banks b ON uba.bank_id = b.bank_id
+WHERE u.is_active = TRUE
+ORDER BY rdi.due_date DESC;
+
 -- Recurring deposits detailed view
 CREATE VIEW v_recurring_deposits AS
 SELECT 

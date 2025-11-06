@@ -436,6 +436,88 @@ A comprehensive RESTful API for managing investment portfolios including securit
         }
       },
 
+      // ==================== BOND DETAILS SCHEMAS ====================
+      BondDetailCreate: {
+        type: 'object',
+        required: ['security_id', 'issuer', 'maturity_date'],
+        properties: {
+          security_id: { type: 'integer', example: 1 },
+          issuer: { type: 'string', maxLength: 255, example: 'Government of India' },
+          coupon_rate: { type: 'number', format: 'decimal', minimum: 0, maximum: 100, example: 7.5 },
+          maturity_date: { type: 'string', format: 'date', example: '2030-12-31' },
+          coupon_payment_frequency: { 
+            type: 'string', 
+            enum: ['annual', 'semi_annual', 'quarterly', 'monthly'],
+            example: 'semi_annual'
+          },
+          bond_type: { 
+            type: 'string', 
+            enum: ['government', 'corporate', 'municipal', 'treasury', 'corporate_high_yield'],
+            example: 'government'
+          },
+          credit_rating: { 
+            type: 'string', 
+            enum: ['AAA', 'AA', 'A', 'BBB', 'BB', 'B', 'CCC', 'D'],
+            example: 'AAA'
+          },
+          yield_to_maturity: { type: 'number', format: 'decimal', minimum: 0, maximum: 100, example: 7.2 },
+          issue_date: { type: 'string', format: 'date', example: '2020-01-01' },
+          next_coupon_date: { type: 'string', format: 'date', example: '2024-06-30' },
+          day_count_convention: { 
+            type: 'string', 
+            enum: ['30/360', 'actual/365', 'actual/360'],
+            example: 'actual/365'
+          }
+        }
+      },
+      BondDetailUpdate: {
+        type: 'object',
+        properties: {
+          issuer: { type: 'string', maxLength: 255 },
+          coupon_rate: { type: 'number', format: 'decimal', minimum: 0, maximum: 100 },
+          maturity_date: { type: 'string', format: 'date' },
+          coupon_payment_frequency: { 
+            type: 'string', 
+            enum: ['annual', 'semi_annual', 'quarterly', 'monthly']
+          },
+          bond_type: { 
+            type: 'string', 
+            enum: ['government', 'corporate', 'municipal', 'treasury', 'corporate_high_yield']
+          },
+          credit_rating: { 
+            type: 'string', 
+            enum: ['AAA', 'AA', 'A', 'BBB', 'BB', 'B', 'CCC', 'D']
+          },
+          yield_to_maturity: { type: 'number', format: 'decimal', minimum: 0, maximum: 100 },
+          issue_date: { type: 'string', format: 'date' },
+          next_coupon_date: { type: 'string', format: 'date' },
+          day_count_convention: { 
+            type: 'string', 
+            enum: ['30/360', 'actual/365', 'actual/360']
+          }
+        }
+      },
+      BondDetail: {
+        type: 'object',
+        properties: {
+          bond_id: { type: 'integer', example: 1 },
+          security_id: { type: 'integer', example: 1 },
+          issuer: { type: 'string', example: 'Government of India' },
+          coupon_rate: { type: 'string', example: '7.5' },
+          maturity_date: { type: 'string', format: 'date', example: '2030-12-31' },
+          coupon_payment_frequency: { type: 'string', example: 'semi_annual' },
+          bond_type: { type: 'string', example: 'government' },
+          credit_rating: { type: 'string', example: 'AAA' },
+          yield_to_maturity: { type: 'string', example: '7.2' },
+          issue_date: { type: 'string', format: 'date', example: '2020-01-01' },
+          next_coupon_date: { type: 'string', format: 'date', example: '2024-06-30' },
+          day_count_convention: { type: 'string', example: 'actual/365' },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+          security: { $ref: '#/components/schemas/Security' }
+        }
+      },
+
       // ==================== BANK SCHEMAS ====================
       BankCreate: {
         type: 'object',
@@ -1423,6 +1505,178 @@ A comprehensive RESTful API for managing investment portfolios including securit
           { name: 'id', in: 'path', required: true, schema: { type: 'integer' } }
         ],
         responses: { 200: { description: 'Security deleted' } }
+      }
+    },
+
+    // ==================== BOND DETAILS ENDPOINTS ====================
+    '/bonds': {
+      get: {
+        tags: ['Bond Details'],
+        summary: 'List all bonds',
+        description: 'Get list of bonds with security info joined, filtering and pagination',
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+          { name: 'issuer', in: 'query', schema: { type: 'string' } },
+          { name: 'bond_type', in: 'query', schema: { type: 'string' } },
+          { name: 'credit_rating', in: 'query', schema: { type: 'string' } },
+          { name: 'search', in: 'query', schema: { type: 'string' } },
+          { name: 'sortBy', in: 'query', schema: { type: 'string' } },
+          { name: 'sortOrder', in: 'query', schema: { type: 'string', enum: ['asc', 'desc'] } }
+        ],
+        responses: {
+          200: { 
+            description: 'Bonds list with pagination',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/PaginatedResponse' }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        tags: ['Bond Details'],
+        summary: 'Create bond details',
+        description: 'Create bond details for a security (security must be of type "bond")',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/BondDetailCreate' }
+            }
+          }
+        },
+        responses: { 
+          201: { 
+            description: 'Bond details created successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/SuccessResponse' }
+              }
+            }
+          },
+          400: { description: 'Validation error or security is not a bond' },
+          404: { description: 'Security not found' },
+          409: { description: 'Bond details already exist for this security' }
+        }
+      }
+    },
+    '/bonds/issuer/{issuer}': {
+      get: {
+        tags: ['Bond Details'],
+        summary: 'Get bonds by issuer',
+        description: 'Get bonds filtered by issuer name',
+        parameters: [
+          { name: 'issuer', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'page', in: 'query', schema: { type: 'integer' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer' } }
+        ],
+        responses: { 
+          200: { 
+            description: 'Bonds filtered by issuer',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/PaginatedResponse' }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/bonds/maturity': {
+      get: {
+        tags: ['Bond Details'],
+        summary: 'Get bonds by maturity date range',
+        description: 'Get bonds filtered by maturity date range',
+        parameters: [
+          { name: 'from', in: 'query', required: true, schema: { type: 'string', format: 'date' }, description: 'Start date (YYYY-MM-DD)' },
+          { name: 'to', in: 'query', required: true, schema: { type: 'string', format: 'date' }, description: 'End date (YYYY-MM-DD)' },
+          { name: 'page', in: 'query', schema: { type: 'integer' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer' } }
+        ],
+        responses: { 
+          200: { 
+            description: 'Bonds filtered by maturity date range',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/PaginatedResponse' }
+              }
+            }
+          },
+          400: { description: 'Invalid date format or missing from/to parameters' }
+        }
+      }
+    },
+    '/bonds/{securityId}': {
+      get: {
+        tags: ['Bond Details'],
+        summary: 'Get bond details by security ID',
+        description: 'Get bond details with security info joined',
+        parameters: [
+          { name: 'securityId', in: 'path', required: true, schema: { type: 'integer' } }
+        ],
+        responses: { 
+          200: { 
+            description: 'Bond details with security info',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/BondDetail' }
+              }
+            }
+          },
+          404: { description: 'Bond details not found' }
+        }
+      },
+      put: {
+        tags: ['Bond Details'],
+        summary: 'Update bond details',
+        description: 'Update bond details for a security',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'securityId', in: 'path', required: true, schema: { type: 'integer' } }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/BondDetailUpdate' }
+            }
+          }
+        },
+        responses: { 
+          200: { 
+            description: 'Bond details updated successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/SuccessResponse' }
+              }
+            }
+          },
+          400: { description: 'Validation error' },
+          404: { description: 'Bond details not found' }
+        }
+      },
+      delete: {
+        tags: ['Bond Details'],
+        summary: 'Delete bond details',
+        description: 'Delete bond details for a security',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'securityId', in: 'path', required: true, schema: { type: 'integer' } }
+        ],
+        responses: { 
+          200: { 
+            description: 'Bond details deleted successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/SuccessResponse' }
+              }
+            }
+          },
+          404: { description: 'Bond details not found' }
+        }
       }
     },
 

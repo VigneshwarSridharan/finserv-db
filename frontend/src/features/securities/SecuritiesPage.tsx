@@ -1,5 +1,5 @@
 import { Container, Heading, Stack, Grid, Card, Text, Button, HStack } from '@chakra-ui/react';
-import { LuBriefcase, LuChartLine, LuWallet, LuArrowRight } from 'react-icons/lu';
+import { LuBriefcase, LuChartLine, LuWallet, LuArrowRight, LuFileText } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
 
 interface FeatureCard {
@@ -20,6 +20,13 @@ const SecuritiesPage = () => {
       icon: <LuBriefcase size={32} />,
       path: '/securities/brokers',
       color: 'blue',
+    },
+    {
+      title: 'Bonds',
+      description: 'Manage bond securities with issuer, coupon rate, and maturity details',
+      icon: <LuFileText size={32} />,
+      path: '/securities/bonds',
+      color: 'teal',
     },
     {
       title: 'Holdings',

@@ -6,7 +6,8 @@ import {
   securities, 
   securityPrices, 
   userSecurityHoldings, 
-  securityTransactions 
+  securityTransactions,
+  bondDetails
 } from './schemas/brokers-securities.schema';
 import { 
   banks, 
@@ -104,11 +105,15 @@ export const userBrokerAccountsRelations = relations(userBrokerAccounts, ({ one,
   transactions: many(securityTransactions)
 }));
 
-export const securitiesRelations = relations(securities, ({ many }) => ({
+export const securitiesRelations = relations(securities, ({ one, many }) => ({
   prices: many(securityPrices),
   holdings: many(userSecurityHoldings),
   transactions: many(securityTransactions),
-  watchlist: many(userWatchlist)
+  watchlist: many(userWatchlist),
+  bondDetail: one(bondDetails, {
+    fields: [securities.security_id],
+    references: [bondDetails.security_id]
+  })
 }));
 
 export const securityPricesRelations = relations(securityPrices, ({ one }) => ({
@@ -144,6 +149,13 @@ export const securityTransactionsRelations = relations(securityTransactions, ({ 
   }),
   security: one(securities, {
     fields: [securityTransactions.security_id],
+    references: [securities.security_id]
+  })
+}));
+
+export const bondDetailsRelations = relations(bondDetails, ({ one }) => ({
+  security: one(securities, {
+    fields: [bondDetails.security_id],
     references: [securities.security_id]
   })
 }));

@@ -665,4 +665,50 @@ export interface CreateGoldDetailRequest {
   current_gold_rate_per_gram?: number;
 }
 
+// Bond Detail Types
+export interface BondDetail {
+  bond_id: number;
+  security_id: number;
+  issuer: string;
+  coupon_rate?: string | null;
+  maturity_date: string;
+  coupon_payment_frequency?: 'annual' | 'semi_annual' | 'quarterly' | 'monthly' | null;
+  bond_type?: 'government' | 'corporate' | 'municipal' | 'treasury' | 'corporate_high_yield' | null;
+  credit_rating?: 'AAA' | 'AA' | 'A' | 'BBB' | 'BB' | 'B' | 'CCC' | 'D' | null;
+  yield_to_maturity?: string | null;
+  issue_date?: string | null;
+  next_coupon_date?: string | null;
+  day_count_convention?: '30/360' | 'actual/365' | 'actual/360' | null;
+  created_at: string;
+  updated_at: string;
+  security?: Security;
+}
+
+export interface CreateBondDetailRequest {
+  security_id: number;
+  issuer: string;
+  coupon_rate?: number;
+  maturity_date: string;
+  coupon_payment_frequency?: 'annual' | 'semi_annual' | 'quarterly' | 'monthly';
+  bond_type?: 'government' | 'corporate' | 'municipal' | 'treasury' | 'corporate_high_yield';
+  credit_rating?: 'AAA' | 'AA' | 'A' | 'BBB' | 'BB' | 'B' | 'CCC' | 'D';
+  yield_to_maturity?: number;
+  issue_date?: string;
+  next_coupon_date?: string;
+  day_count_convention?: '30/360' | 'actual/365' | 'actual/360';
+}
+
+export interface UpdateBondDetailRequest {
+  issuer?: string;
+  coupon_rate?: number;
+  maturity_date?: string;
+  coupon_payment_frequency?: 'annual' | 'semi_annual' | 'quarterly' | 'monthly';
+  bond_type?: 'government' | 'corporate' | 'municipal' | 'treasury' | 'corporate_high_yield';
+  credit_rating?: 'AAA' | 'AA' | 'A' | 'BBB' | 'BB' | 'B' | 'CCC' | 'D';
+  yield_to_maturity?: number;
+  issue_date?: string;
+  next_coupon_date?: string;
+  day_count_convention?: '30/360' | 'actual/365' | 'actual/360';
+}
+
 

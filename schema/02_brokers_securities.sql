@@ -107,6 +107,25 @@ CREATE TABLE security_transactions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Bond details (specific to bond securities)
+CREATE TABLE bond_details (
+    bond_id SERIAL PRIMARY KEY,
+    security_id INTEGER NOT NULL REFERENCES securities(security_id) ON DELETE CASCADE,
+    issuer VARCHAR(255) NOT NULL,
+    coupon_rate DECIMAL(5,2),
+    maturity_date DATE NOT NULL,
+    coupon_payment_frequency VARCHAR(20) CHECK (coupon_payment_frequency IN ('annual', 'semi_annual', 'quarterly', 'monthly')),
+    bond_type VARCHAR(50) CHECK (bond_type IN ('government', 'corporate', 'municipal', 'treasury', 'corporate_high_yield')),
+    credit_rating VARCHAR(10) CHECK (credit_rating IN ('AAA', 'AA', 'A', 'BBB', 'BB', 'B', 'CCC', 'D')),
+    yield_to_maturity DECIMAL(5,2),
+    issue_date DATE,
+    next_coupon_date DATE,
+    day_count_convention VARCHAR(20) CHECK (day_count_convention IN ('30/360', 'actual/365', 'actual/360')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(security_id)
+);
+
 -- Create indexes for brokers and securities schema
 CREATE INDEX idx_brokers_active ON brokers(is_active);
 CREATE INDEX idx_brokers_type ON brokers(broker_type);
@@ -126,3 +145,7 @@ CREATE INDEX idx_security_transactions_account_id ON security_transactions(accou
 CREATE INDEX idx_security_transactions_security_id ON security_transactions(security_id);
 CREATE INDEX idx_security_transactions_date ON security_transactions(transaction_date);
 CREATE INDEX idx_security_transactions_type ON security_transactions(transaction_type);
+CREATE INDEX idx_bond_details_security_id ON bond_details(security_id);
+CREATE INDEX idx_bond_details_issuer ON bond_details(issuer);
+CREATE INDEX idx_bond_details_maturity_date ON bond_details(maturity_date);
+CREATE INDEX idx_bond_details_bond_type ON bond_details(bond_type);

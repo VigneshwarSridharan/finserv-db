@@ -11,6 +11,9 @@ const DashboardPage = lazy(() => import('../features/dashboard/DashboardPage'));
 const SecuritiesPage = lazy(() => import('../features/securities/SecuritiesPage'));
 const BrokersPage = lazy(() => import('../features/securities/BrokersPage'));
 const BrokerAccountsPage = lazy(() => import('../features/securities/BrokerAccountsPage'));
+const BondsPage = lazy(() => import('../features/securities/BondsPage'));
+const BondForm = lazy(() => import('../features/securities/BondForm'));
+const BondDetailsPage = lazy(() => import('../features/securities/BondDetailsPage'));
 const HoldingsPage = lazy(() => import('../features/securities/HoldingsPage'));
 const TransactionsPage = lazy(() => import('../features/securities/TransactionsPage'));
 const MarketDataTestPage = lazy(() => import('../features/securities/MarketDataTestPage'));
@@ -103,6 +106,10 @@ const AppRoutes = () => {
           <Route path="securities" element={<RouteElement><SecuritiesPage /></RouteElement>} />
           <Route path="securities/brokers" element={<RouteElement><BrokersPage /></RouteElement>} />
           <Route path="securities/accounts" element={<RouteElement><BrokerAccountsPage /></RouteElement>} />
+          <Route path="securities/bonds" element={<RouteElement><BondsPage /></RouteElement>} />
+          <Route path="securities/bonds/new" element={<RouteElement><BondForm /></RouteElement>} />
+          <Route path="securities/bonds/:securityId" element={<RouteElement><BondDetailsPage /></RouteElement>} />
+          <Route path="securities/bonds/:securityId/edit" element={<RouteElement><BondForm /></RouteElement>} />
           <Route path="securities/holdings" element={<RouteElement><HoldingsPage /></RouteElement>} />
           <Route path="securities/transactions" element={<RouteElement><TransactionsPage /></RouteElement>} />
           <Route path="securities/market-data-test" element={<RouteElement><MarketDataTestPage /></RouteElement>} />

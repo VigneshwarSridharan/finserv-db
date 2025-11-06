@@ -157,6 +157,34 @@ export const securityTransactions = pgTable('security_transactions', {
   transactionTypeCheck: check('transaction_type_check', sql`${table.transaction_type} IN ('buy', 'sell', 'bonus', 'split', 'dividend')`)
 }));
 
+// Bond details (specific to bond securities)
+export const bondDetails = pgTable('bond_details', {
+  bond_id: serial('bond_id').primaryKey(),
+  security_id: integer('security_id').notNull().references(() => securities.security_id, { onDelete: 'cascade' }).unique(),
+  issuer: varchar('issuer', { length: 255 }).notNull(),
+  coupon_rate: decimal('coupon_rate', { precision: 5, scale: 2 }),
+  maturity_date: date('maturity_date').notNull(),
+  coupon_payment_frequency: varchar('coupon_payment_frequency', { length: 20 }),
+  bond_type: varchar('bond_type', { length: 50 }),
+  credit_rating: varchar('credit_rating', { length: 10 }),
+  yield_to_maturity: decimal('yield_to_maturity', { precision: 5, scale: 2 }),
+  issue_date: date('issue_date'),
+  next_coupon_date: date('next_coupon_date'),
+  day_count_convention: varchar('day_count_convention', { length: 20 }),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  securityIdIdx: index('idx_bond_details_security_id').on(table.security_id),
+  issuerIdx: index('idx_bond_details_issuer').on(table.issuer),
+  maturityDateIdx: index('idx_bond_details_maturity_date').on(table.maturity_date),
+  bondTypeIdx: index('idx_bond_details_bond_type').on(table.bond_type),
+  uniqueSecurityId: unique('bond_details_security_id_unique').on(table.security_id),
+  couponFrequencyCheck: check('coupon_payment_frequency_check', sql`${table.coupon_payment_frequency} IN ('annual', 'semi_annual', 'quarterly', 'monthly')`),
+  bondTypeCheck: check('bond_type_check', sql`${table.bond_type} IN ('government', 'corporate', 'municipal', 'treasury', 'corporate_high_yield')`),
+  creditRatingCheck: check('credit_rating_check', sql`${table.credit_rating} IN ('AAA', 'AA', 'A', 'BBB', 'BB', 'B', 'CCC', 'D')`),
+  dayCountCheck: check('day_count_convention_check', sql`${table.day_count_convention} IN ('30/360', 'actual/365', 'actual/360')`)
+}));
+
 // Type exports
 export type Broker = typeof brokers.$inferSelect;
 export type NewBroker = typeof brokers.$inferInsert;
@@ -170,4 +198,6 @@ export type UserSecurityHolding = typeof userSecurityHoldings.$inferSelect;
 export type NewUserSecurityHolding = typeof userSecurityHoldings.$inferInsert;
 export type SecurityTransaction = typeof securityTransactions.$inferSelect;
 export type NewSecurityTransaction = typeof securityTransactions.$inferInsert;
+export type BondDetail = typeof bondDetails.$inferSelect;
+export type NewBondDetail = typeof bondDetails.$inferInsert;
 

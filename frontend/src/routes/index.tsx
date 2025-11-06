@@ -13,6 +13,7 @@ const BrokersPage = lazy(() => import('../features/securities/BrokersPage'));
 const BrokerAccountsPage = lazy(() => import('../features/securities/BrokerAccountsPage'));
 const HoldingsPage = lazy(() => import('../features/securities/HoldingsPage'));
 const TransactionsPage = lazy(() => import('../features/securities/TransactionsPage'));
+const MarketDataTestPage = lazy(() => import('../features/securities/MarketDataTestPage'));
 const BankingPage = lazy(() => import('../features/banking/BankingPage'));
 const BankAccountsPage = lazy(() => import('../features/banking/BankAccountsPage'));
 const FixedDepositsPage = lazy(() => import('../features/banking/FixedDepositsPage'));
@@ -104,6 +105,7 @@ const AppRoutes = () => {
           <Route path="securities/accounts" element={<RouteElement><BrokerAccountsPage /></RouteElement>} />
           <Route path="securities/holdings" element={<RouteElement><HoldingsPage /></RouteElement>} />
           <Route path="securities/transactions" element={<RouteElement><TransactionsPage /></RouteElement>} />
+          <Route path="securities/market-data-test" element={<RouteElement><MarketDataTestPage /></RouteElement>} />
           <Route path="banking" element={<RouteElement><BankingPage /></RouteElement>} />
           <Route path="banking/accounts" element={<RouteElement><BankAccountsPage /></RouteElement>} />
           <Route path="banking/fixed-deposits" element={<RouteElement><FixedDepositsPage /></RouteElement>} />

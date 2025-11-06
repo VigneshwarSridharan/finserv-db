@@ -10,6 +10,7 @@ import portfolioRoutes from './routes/portfolio.routes';
 import brokersRoutes from './routes/brokers.routes';
 import securitiesRoutes from './routes/securities.routes';
 import securityPricesRoutes from './routes/security-prices.routes';
+import marketDataRoutes from './routes/market-data.routes';
 import userBrokerAccountsRoutes from './routes/user-broker-accounts.routes';
 import securityHoldingsRoutes from './routes/security-holdings.routes';
 import securityTransactionsRoutes from './routes/security-transactions.routes';
@@ -178,6 +179,7 @@ export function createApp(): Application {
   app.use('/brokers', brokersRoutes);
   app.use('/securities', securitiesRoutes);
   app.use('/securities', securityPricesRoutes); // Nested routes for security prices
+  app.use('/market-data', marketDataRoutes); // Market data routes for LTP fetching
   app.use('/accounts/brokers', userBrokerAccountsRoutes);
   app.use('/holdings/securities', securityHoldingsRoutes);
   app.use('/transactions/securities', securityTransactionsRoutes);

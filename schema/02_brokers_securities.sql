@@ -149,3 +149,30 @@ CREATE INDEX idx_bond_details_security_id ON bond_details(security_id);
 CREATE INDEX idx_bond_details_issuer ON bond_details(issuer);
 CREATE INDEX idx_bond_details_maturity_date ON bond_details(maturity_date);
 CREATE INDEX idx_bond_details_bond_type ON bond_details(bond_type);
+
+-- Bond repayments (scheduled and actual payments)
+CREATE TABLE bond_repayments (
+    repayment_id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    holding_id INTEGER NOT NULL REFERENCES user_security_holdings(holding_id) ON DELETE CASCADE,
+    security_id INTEGER NOT NULL REFERENCES securities(security_id) ON DELETE CASCADE,
+    repayment_type VARCHAR(20) NOT NULL CHECK (repayment_type IN ('coupon', 'principal')),
+    scheduled_date DATE NOT NULL,
+    scheduled_amount DECIMAL(15,2) NOT NULL,
+    actual_payment_date DATE,
+    actual_amount DECIMAL(15,2),
+    payment_status VARCHAR(20) NOT NULL DEFAULT 'scheduled' CHECK (payment_status IN ('scheduled', 'paid', 'overdue', 'missed')),
+    coupon_period_start DATE,
+    coupon_period_end DATE,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for bond repayments
+CREATE INDEX idx_bond_repayments_user_id ON bond_repayments(user_id);
+CREATE INDEX idx_bond_repayments_holding_id ON bond_repayments(holding_id);
+CREATE INDEX idx_bond_repayments_security_id ON bond_repayments(security_id);
+CREATE INDEX idx_bond_repayments_scheduled_date ON bond_repayments(scheduled_date);
+CREATE INDEX idx_bond_repayments_payment_status ON bond_repayments(payment_status);
+CREATE INDEX idx_bond_repayments_repayment_type ON bond_repayments(repayment_type);

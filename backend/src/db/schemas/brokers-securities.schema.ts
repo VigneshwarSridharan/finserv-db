@@ -185,6 +185,34 @@ export const bondDetails = pgTable('bond_details', {
   dayCountCheck: check('day_count_convention_check', sql`${table.day_count_convention} IN ('30/360', 'actual/365', 'actual/360')`)
 }));
 
+// Bond repayments (scheduled and actual payments)
+export const bondRepayments = pgTable('bond_repayments', {
+  repayment_id: serial('repayment_id').primaryKey(),
+  user_id: integer('user_id').notNull().references(() => users.user_id, { onDelete: 'cascade' }),
+  holding_id: integer('holding_id').notNull().references(() => userSecurityHoldings.holding_id, { onDelete: 'cascade' }),
+  security_id: integer('security_id').notNull().references(() => securities.security_id, { onDelete: 'cascade' }),
+  repayment_type: varchar('repayment_type', { length: 20 }).notNull(),
+  scheduled_date: date('scheduled_date').notNull(),
+  scheduled_amount: decimal('scheduled_amount', { precision: 15, scale: 2 }).notNull(),
+  actual_payment_date: date('actual_payment_date'),
+  actual_amount: decimal('actual_amount', { precision: 15, scale: 2 }),
+  payment_status: varchar('payment_status', { length: 20 }).notNull().default('scheduled'),
+  coupon_period_start: date('coupon_period_start'),
+  coupon_period_end: date('coupon_period_end'),
+  notes: text('notes'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow()
+}, (table) => ({
+  userIdIdx: index('idx_bond_repayments_user_id').on(table.user_id),
+  holdingIdIdx: index('idx_bond_repayments_holding_id').on(table.holding_id),
+  securityIdIdx: index('idx_bond_repayments_security_id').on(table.security_id),
+  scheduledDateIdx: index('idx_bond_repayments_scheduled_date').on(table.scheduled_date),
+  paymentStatusIdx: index('idx_bond_repayments_payment_status').on(table.payment_status),
+  repaymentTypeIdx: index('idx_bond_repayments_repayment_type').on(table.repayment_type),
+  repaymentTypeCheck: check('repayment_type_check', sql`${table.repayment_type} IN ('coupon', 'principal')`),
+  paymentStatusCheck: check('payment_status_check', sql`${table.payment_status} IN ('scheduled', 'paid', 'overdue', 'missed')`)
+}));
+
 // Type exports
 export type Broker = typeof brokers.$inferSelect;
 export type NewBroker = typeof brokers.$inferInsert;
@@ -200,4 +228,6 @@ export type SecurityTransaction = typeof securityTransactions.$inferSelect;
 export type NewSecurityTransaction = typeof securityTransactions.$inferInsert;
 export type BondDetail = typeof bondDetails.$inferSelect;
 export type NewBondDetail = typeof bondDetails.$inferInsert;
+export type BondRepayment = typeof bondRepayments.$inferSelect;
+export type NewBondRepayment = typeof bondRepayments.$inferInsert;
 

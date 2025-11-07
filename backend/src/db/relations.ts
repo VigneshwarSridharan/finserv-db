@@ -7,7 +7,8 @@ import {
   securityPrices, 
   userSecurityHoldings, 
   securityTransactions,
-  bondDetails
+  bondDetails,
+  bondRepayments
 } from './schemas/brokers-securities.schema';
 import { 
   banks, 
@@ -123,7 +124,7 @@ export const securityPricesRelations = relations(securityPrices, ({ one }) => ({
   })
 }));
 
-export const userSecurityHoldingsRelations = relations(userSecurityHoldings, ({ one }) => ({
+export const userSecurityHoldingsRelations = relations(userSecurityHoldings, ({ one, many }) => ({
   user: one(users, {
     fields: [userSecurityHoldings.user_id],
     references: [users.user_id]
@@ -135,7 +136,8 @@ export const userSecurityHoldingsRelations = relations(userSecurityHoldings, ({ 
   security: one(securities, {
     fields: [userSecurityHoldings.security_id],
     references: [securities.security_id]
-  })
+  }),
+  bondRepayments: many(bondRepayments)
 }));
 
 export const securityTransactionsRelations = relations(securityTransactions, ({ one }) => ({
@@ -156,6 +158,21 @@ export const securityTransactionsRelations = relations(securityTransactions, ({ 
 export const bondDetailsRelations = relations(bondDetails, ({ one }) => ({
   security: one(securities, {
     fields: [bondDetails.security_id],
+    references: [securities.security_id]
+  })
+}));
+
+export const bondRepaymentsRelations = relations(bondRepayments, ({ one }) => ({
+  user: one(users, {
+    fields: [bondRepayments.user_id],
+    references: [users.user_id]
+  }),
+  holding: one(userSecurityHoldings, {
+    fields: [bondRepayments.holding_id],
+    references: [userSecurityHoldings.holding_id]
+  }),
+  security: one(securities, {
+    fields: [bondRepayments.security_id],
     references: [securities.security_id]
   })
 }));

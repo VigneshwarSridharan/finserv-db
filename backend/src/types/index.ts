@@ -241,6 +241,38 @@ export interface BondDetailResponseDTO {
   security?: Security;
 }
 
+export interface BondRepaymentCreateDTO {
+  holding_id: number;
+  security_id: number;
+  repayment_type: 'coupon' | 'principal';
+  scheduled_date: string;
+  scheduled_amount: number;
+  actual_payment_date?: string;
+  actual_amount?: number;
+  payment_status?: 'scheduled' | 'paid' | 'overdue' | 'missed';
+  coupon_period_start?: string;
+  coupon_period_end?: string;
+  notes?: string;
+}
+
+export interface BondRepaymentUpdateDTO {
+  scheduled_date?: string;
+  scheduled_amount?: number;
+  actual_payment_date?: string;
+  actual_amount?: number;
+  payment_status?: 'scheduled' | 'paid' | 'overdue' | 'missed';
+  coupon_period_start?: string;
+  coupon_period_end?: string;
+  notes?: string;
+}
+
+export interface BondRepaymentScheduleDTO {
+  holding_id: number;
+  security_id: number;
+  start_date?: string; // Optional: start generating from this date (defaults to today or issue_date)
+  include_past?: boolean; // Whether to include past scheduled payments
+}
+
 // ==================== Bank & Deposits Types ====================
 export interface BankCreateDTO {
   bank_name: string;

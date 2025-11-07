@@ -19,9 +19,10 @@ import {
   StatLabel,
   StatValue,
 } from '@chakra-ui/react';
-import { LuPencil, LuTrash2, LuArrowLeft } from 'react-icons/lu';
+import { LuPencil, LuTrash2, LuArrowLeft, LuCalendar } from 'react-icons/lu';
 import { format } from 'date-fns';
 import { bondsService } from '../../api/services/bonds.service';
+import { bondRepaymentsService } from '../../api/services/bond-repayments.service';
 import { toaster } from '../../components/ui/toaster';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
@@ -36,6 +37,12 @@ const BondDetailsPage = () => {
   const { data: response, isLoading } = useQuery({
     queryKey: ['bond', securityId],
     queryFn: () => bondsService.getById(securityId!),
+    enabled: !!securityId,
+  });
+
+  const { data: repaymentsResponse, isLoading: isLoadingRepayments } = useQuery({
+    queryKey: ['bond-repayments', 'security', securityId],
+    queryFn: () => bondRepaymentsService.getBySecurity(securityId!),
     enabled: !!securityId,
   });
 
@@ -86,7 +93,13 @@ const BondDetailsPage = () => {
     }
   };
 
-  if (isLoading) return <LoadingSpinner />;
+  const repayments = repaymentsResponse?.data || [];
+  const upcomingRepayments = repayments.filter((r) => 
+    r.payment_status === 'scheduled' && new Date(r.scheduled_date) >= new Date()
+  ).slice(0, 5);
+  const overdueRepayments = repayments.filter((r) => r.payment_status === 'overdue');
+
+  if (isLoading || isLoadingRepayments) return <LoadingSpinner />;
 
   if (!bond) {
     return (
@@ -111,6 +124,13 @@ const BondDetailsPage = () => {
             <LuArrowLeft /> Back to Bonds
           </Button>
           <HStack gap={2}>
+            <Button
+              colorScheme="purple"
+              variant="outline"
+              onClick={() => navigate(`/securities/bond-repayments?security_id=${bond.security_id}`)}
+            >
+              <LuCalendar /> Repayments
+            </Button>
             <Button
               colorScheme="blue"
               onClick={() => navigate(`/securities/bonds/${bond.security_id}/edit`)}
@@ -297,6 +317,87 @@ const BondDetailsPage = () => {
               </CardBody>
             </Card>
           )}
+
+          <Card gridColumn={{ base: '1', md: '1 / -1' }}>
+            <CardHeader>
+              <HStack justifyContent="space-between">
+                <CardTitle>Repayments</CardTitle>
+                <Button
+                  size="sm"
+                  colorScheme="purple"
+                  variant="outline"
+                  onClick={() => navigate(`/securities/bond-repayments?security_id=${bond.security_id}`)}
+                >
+                  <LuCalendar /> View All Repayments
+                </Button>
+              </HStack>
+            </CardHeader>
+            <CardBody>
+              {repayments.length === 0 ? (
+                <Text color="text.secondary">No repayments scheduled yet.</Text>
+              ) : (
+                <VStack align="stretch" gap={4}>
+                  {overdueRepayments.length > 0 && (
+                    <Stack gap={2}>
+                      <Text fontWeight="bold" color="red.500">
+                        Overdue Payments ({overdueRepayments.length})
+                      </Text>
+                      {overdueRepayments.slice(0, 3).map((repayment) => (
+                        <Flex key={repayment.repayment_id} justify="space-between" p={2} bg="red.50" borderRadius="md">
+                          <VStack align="start" gap={0}>
+                            <Text fontWeight="medium">
+                              {repayment.repayment_type.toUpperCase()} - {formatDate(repayment.scheduled_date)}
+                            </Text>
+                            <Text fontSize="sm" color="text.secondary">
+                              ₹{parseFloat(repayment.scheduled_amount || '0').toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </Text>
+                          </VStack>
+                        </Flex>
+                      ))}
+                    </Stack>
+                  )}
+                  
+                  {upcomingRepayments.length > 0 && (
+                    <Stack gap={2}>
+                      <Text fontWeight="bold">Upcoming Payments</Text>
+                      {upcomingRepayments.map((repayment) => (
+                        <Flex key={repayment.repayment_id} justify="space-between" p={2} bg="bg.surface" borderRadius="md" borderWidth="1px">
+                          <VStack align="start" gap={0}>
+                            <Text fontWeight="medium">
+                              {repayment.repayment_type.toUpperCase()} - {formatDate(repayment.scheduled_date)}
+                            </Text>
+                            <Text fontSize="sm" color="text.secondary">
+                              ₹{parseFloat(repayment.scheduled_amount || '0').toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </Text>
+                          </VStack>
+                          <Badge colorScheme="blue">{repayment.payment_status.toUpperCase()}</Badge>
+                        </Flex>
+                      ))}
+                    </Stack>
+                  )}
+
+                  <Stat>
+                    <StatLabel>Total Scheduled</StatLabel>
+                    <StatValue>
+                      ₹{repayments
+                        .filter((r) => r.payment_status === 'scheduled')
+                        .reduce((sum, r) => sum + parseFloat(r.scheduled_amount || '0'), 0)
+                        .toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </StatValue>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Total Paid</StatLabel>
+                    <StatValue>
+                      ₹{repayments
+                        .filter((r) => r.actual_amount)
+                        .reduce((sum, r) => sum + parseFloat(r.actual_amount || '0'), 0)
+                        .toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </StatValue>
+                  </Stat>
+                </VStack>
+              )}
+            </CardBody>
+          </Card>
         </Grid>
 
         <ConfirmDialog

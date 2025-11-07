@@ -711,4 +711,55 @@ export interface UpdateBondDetailRequest {
   day_count_convention?: '30/360' | 'actual/365' | 'actual/360';
 }
 
+// Bond Repayment Types
+export interface BondRepayment {
+  repayment_id: number;
+  user_id: number;
+  holding_id: number;
+  security_id: number;
+  repayment_type: 'coupon' | 'principal';
+  scheduled_date: string;
+  scheduled_amount: string;
+  actual_payment_date?: string | null;
+  actual_amount?: string | null;
+  payment_status: 'scheduled' | 'paid' | 'overdue' | 'missed';
+  coupon_period_start?: string | null;
+  coupon_period_end?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateBondRepaymentRequest {
+  holding_id: number;
+  security_id: number;
+  repayment_type: 'coupon' | 'principal';
+  scheduled_date: string;
+  scheduled_amount: number;
+  actual_payment_date?: string;
+  actual_amount?: number;
+  payment_status?: 'scheduled' | 'paid' | 'overdue' | 'missed';
+  coupon_period_start?: string;
+  coupon_period_end?: string;
+  notes?: string;
+}
+
+export interface UpdateBondRepaymentRequest {
+  scheduled_date?: string;
+  scheduled_amount?: number;
+  actual_payment_date?: string;
+  actual_amount?: number;
+  payment_status?: 'scheduled' | 'paid' | 'overdue' | 'missed';
+  coupon_period_start?: string;
+  coupon_period_end?: string;
+  notes?: string;
+}
+
+export interface GenerateRepaymentScheduleRequest {
+  holding_id: number;
+  security_id: number;
+  start_date?: string;
+  include_past?: boolean;
+}
+
 
